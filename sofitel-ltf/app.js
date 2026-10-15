@@ -248,100 +248,201 @@ const rank = () => RANKS[Math.min(RANKS.length-1, Math.floor(S.xp/300))];
 const mastery = ch => { const p = items.filter(i=>!ch||i.ch===ch); return Math.round(100*p.filter(i=>(S.m[i.id]||{}).s>=3).length/p.length); };
 function record(it, ok, xp){ const m = S.m[it.id] || {s:0,c:0,w:0}; if(ok){m.s++;m.c++; S.xp += xp||10; S.review = S.review.filter(x=>x!==it.id);} else {m.s=0;m.w++; if(!S.review.includes(it.id)) S.review.push(it.id);} S.m[it.id]=m; save(); }
 
-// ---------- ⓘ modal ----------
-const ib = it => it && it.info ? `<button class="ib" onclick="event.stopPropagation();LTFinfo('${it.id}')" aria-label="info">ⓘ</button>` : '';
-window.LTFinfo = id => { const it = items.find(i=>i.id===id); if(!it||!it.info) return; const old=$('#imodal'); if(old) old.remove();
-  const d = document.createElement('div'); d.id='imodal'; d.className='imodal';
+// ---------- icons ----------
+const IC = {
+ home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+ book:'<path d="M4 4h6a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-6a3 3 0 0 0-3 3v13a2 2 0 0 1 2-2h7z"/>',
+ redo:'<path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+ back:'<path d="M15 5l-7 7 7 7"/>', chev:'<path d="M9 5l7 7-7 7"/>', x:'<path d="M6 6l12 12M18 6L6 18"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+ cam:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+ flame:'<path d="M12 3c1 4 5 6 5 11a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 3 3 5 0-3 0-6 0-9z"/>',
+ target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/>',
+ cap:'<path d="M2 9l10-5 10 5-10 5zM6 11v5c3 2 9 2 12 0v-5"/>',
+ timer:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
+ cards:'<rect x="3" y="6" width="13" height="15" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v13"/>',
+ quiz:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .8-1 1.7M12 17h.01"/>',
+ glass:'<path d="M5 4h14l-7 8zM12 12v8M8 20h8"/>', check:'<path d="M5 12l5 5 9-10"/>',
+ reset:'<path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v5h5"/>', info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>',
+ pin:'<path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+ moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
+ cake:'<path d="M4 20h16v-7H4zM4 15c2 1.5 4-1 6 0s4 1.5 6 0 4-1 4 0M12 9v4M12 5.5v.5"/>',
+ cup:'<path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h2a2 2 0 0 1 0 4h-2M8 3v3M12 3v3"/>',
+ wine:'<path d="M8 3h8l-1 6a3 3 0 0 1-6 0zM12 12v8M8 21h8"/>',
+ flute:'<path d="M10 3h4l-.5 8a1.5 1.5 0 0 1-3 0zM12 13v7M9 21h6"/>',
+ tumbler:'<path d="M6 5h12l-1.5 14h-9zM6.7 11h10.6"/>',
+ grape:'<circle cx="9" cy="10" r="2.2"/><circle cx="15" cy="10" r="2.2"/><circle cx="12" cy="14" r="2.2"/><circle cx="9" cy="18" r="2.2"/><circle cx="15" cy="18" r="2.2"/><path d="M12 8V4l3-1"/>',
+ map:'<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14"/>',
+ globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+ sound:'<path d="M4 9h4l5-4v14l-5-4H4zM17 9a4 4 0 0 1 0 6"/>',
+ palette:'<path d="M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.5 0-1.5-1.5-1.5-1.5-3S13 14 14.5 14H17a4 4 0 0 0 4-4c0-4-4-7-9-7z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/>',
+ trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>', star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+ award:'<circle cx="12" cy="9" r="6"/><path d="M8.5 14l-1.5 7 5-3 5 3-1.5-7"/>'
+};
+const ic = (n, s) => `<svg class="i" width="${s||22}" height="${s||22}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]||''}</svg>`;
+const CHIC = {dej:'sun', diner:'moon', dess:'cake', cock:'glass', cafe:'cup', vins:'wine', champ:'flute', dig:'tumbler', acc:'grape', plan:'map'};
+
+// ---------- theme ----------
+const THEMES = ['auto','light','dark','black'];
+const mq = window.matchMedia ? matchMedia('(prefers-color-scheme: light)') : null;
+function applyTheme(){ const t = S.theme||'auto'; const eff = t==='auto' ? (mq&&mq.matches?'light':'dark') : t; document.documentElement.setAttribute('data-theme', eff);
+  const m = document.querySelector('meta[name=theme-color]'); if(m) m.setAttribute('content', eff==='light'?'#ffffff':eff==='black'?'#000000':'#0d1a2e'); }
+applyTheme(); if(mq){ try{ mq.addEventListener('change', applyTheme); }catch(e){ try{ mq.addListener(applyTheme); }catch(_){} } }
+window.LTFtheme = t => { S.theme = t; save(); applyTheme(); settings(); };
+
+// ---------- overlays: sheet + dialog ----------
+const strip = s => String(s||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+function closeOverlays(){ document.querySelectorAll('.ov').forEach(o=>o.remove()); }
+function sheet(html, opts){ opts=opts||{}; const old=$('#sheet'); if(old) old.remove(); const d=document.createElement('div'); d.id='sheet'; d.className='ov scrim';
+  d.innerHTML = `<div class="sheet${opts.cls?' '+opts.cls:''}"><div class="grab"></div><div class="sbody">${html}</div>${opts.bar?`<div class="abar">${opts.bar}</div>`:''}</div>`;
+  d.onclick = e => { if(e.target===d) closeSheet(); }; document.body.appendChild(d); return d; }
+window.LTFcloseSheet = closeSheet;
+function closeSheet(){ const d=$('#sheet'); if(!d) return; d.classList.add('out'); setTimeout(()=>d.remove(),180); }
+function dialog(html, dismiss){ const old=$('#dlg'); if(old) old.remove(); const d=document.createElement('div'); d.id='dlg'; d.className='ov scrim center'; d.innerHTML=`<div class="dialog">${html}</div>`; if(dismiss!==false) d.onclick=e=>{ if(e.target===d) d.remove(); }; document.body.appendChild(d); return d; }
+function confirmDlg(title, text, okLbl, onOk, danger){ const d = dialog(`<div class="dt">${title}</div><p class="muted">${text}</p><div class="dbtns"><button class="btn sec" id="dno">${T('Annuler','Cancel')}</button><button class="btn ${danger?'danger':''}" id="dok">${okLbl}</button></div>`);
+  d.querySelector('#dno').onclick=()=>d.remove(); d.querySelector('#dok').onclick=()=>{ d.remove(); onOk(); }; }
+
+// ---------- ⓘ sheet ----------
+const ib = it => it && it.info ? `<button class="ib" onclick="event.stopPropagation();LTFinfo('${it.id}')" aria-label="info">${ic('info',20)}</button>` : '';
+window.LTFinfo = id => { const it = items.find(i=>i.id===id); if(!it||!it.info) return;
   const ph = photoOf(it), mine = !!PH[it.ikey];
-  d.innerHTML = `<div class="ibox"><button class="ghost iclose" onclick="document.getElementById('imodal').remove()">✕</button><h2>${it.front}</h2>
-  ${it.ikey?`<div class="iphoto">${ph?`<img src="${ph}" alt="">`:''}<div class="iptag">${mine?T('📷 Votre photo','📷 Your photo'):T('Photo d\'illustration (internet)','Sample photo (from the web)')}</div>
-  <div class="ipbtn"><label class="chip">📷 ${mine?T('Changer la photo','Change photo'):T('Prendre ma photo','Take my photo')}<input type="file" accept="image/*" capture="environment" id="phin" hidden></label>${mine?`<button class="chip" id="phrst">↺ ${T('Photo par défaut','Default photo')}</button>`:''}</div></div>`:''}
-  ${it.info}</div>`;
-  d.onclick = e => { if(e.target===d) d.remove(); }; document.body.appendChild(d);
-  const inp = d.querySelector('#phin'); if(inp) inp.onchange = async () => { const f = inp.files && inp.files[0]; if(!f) return; try{ const url = await shrink(f); PH[it.ikey]=url; await idbPut(it.ikey,url); toast(T('Photo enregistrée ✅','Photo saved ✅')); LTFinfo(id); refresh(); }catch(e){ toast(T('Photo impossible à lire','Could not read photo')); } };
-  const rs = d.querySelector('#phrst'); if(rs) rs.onclick = async () => { delete PH[it.ikey]; await idbPut(it.ikey,null); LTFinfo(id); refresh(); }; };
+  const html = `${it.ikey&&ph?`<div class="hphoto"><img src="${ph}" alt=""><span class="ptag">${mine?T('Votre photo','Your photo'):T('Photo d\'illustration','Sample photo')}</span><button class="pclose" onclick="LTFcloseSheet()">${ic('x',18)}</button></div>`:`<button class="pclose solo" onclick="LTFcloseSheet()">${ic('x',18)}</button>`}
+   <div class="stitle">${it.front}</div><div class="sdesc">${it.back}</div><div class="sinfo">${it.info}</div>`;
+  const bar = it.ikey ? `${mine?`<button class="btn sec sq" id="phrst" aria-label="reset">${ic('reset',20)}</button>`:''}<label class="btn grow">${ic('cam',20)} ${mine?T('Changer la photo','Change photo'):T('Prendre ma photo','Take my photo')}<input type="file" accept="image/*" capture="environment" id="phin" hidden></label>` : '';
+  const d = sheet(html, {bar});
+  const inp = d.querySelector('#phin'); if(inp) inp.onchange = async () => { const f = inp.files && inp.files[0]; if(!f) return; try{ const url = await shrink(f); PH[it.ikey]=url; await idbPut(it.ikey,url); toast(T('Photo enregistrée','Photo saved')); LTFinfo(id); refresh(); }catch(e){ toast(T('Photo impossible à lire','Could not read photo')); } };
+  const rs = d.querySelector('#phrst'); if(rs) rs.onclick = () => confirmDlg(T('Photo par défaut ?','Default photo?'), T('Votre photo sera supprimée de ce téléphone.','Your photo will be removed from this phone.'), T('Rétablir','Restore'), async()=>{ delete PH[it.ikey]; await idbPut(it.ikey,null); LTFinfo(id); refresh(); }, true); };
 let lastView = ['hub'];
 function refresh(){ const v=lastView; if(v[0]==='carte') { const q=$('#srch'); const val=q?q.value:''; carte(); if($('#srch')){ $('#srch').value=val; $('#srch').oninput(); } } }
 
-// ---------- UI ----------
-function header(title, back){ return `<div class="top"><button class="ghost" onclick="LTFgo('${back||'hub'}')">‹</button><div class="ttl">${title}</div><div class="xp">${S.xp} XP</div></div>`; }
-const go = window.LTFgo = (where, arg) => { clearInterval(timer); lastView=[where,arg]; const m=$('#imodal'); if(m) m.remove(); ({hub, chapter, study, quiz:()=>quiz(arg,10), chrono, exam, review, carte, settings, bar, planFind, cert}[where] || hub)(arg); window.scrollTo(0,0); };
+// ---------- navigation ----------
+const TABS = [['hub','home',T('Accueil','Home')],['carte','book',T('La Carte','Menu')],['revise','redo',T('Réviser','Review')],['settings','user',T('Profil','Profile')]];
+const TABOF = {hub:'hub', chapter:'hub', carte:'carte', revise:'revise', settings:'settings', cert:'revise'};
+const PARENT = {chapter:'hub', study:'chapter', quiz:'chapter', chrono:'chapter', bar:'chapter', planFind:'chapter', review:'revise', exam:'revise', cert:'revise', carte:'hub', revise:'hub', settings:'hub'};
+function tabbar(where){ let tb=$('#tabbar'); if(!tb){ tb=document.createElement('nav'); tb.id='tabbar'; document.body.appendChild(tb); }
+  const cur = TABOF[where]; tb.style.display = cur ? '' : 'none'; document.body.classList.toggle('notabs', !cur);
+  tb.innerHTML = TABS.map(([v,i,l])=>`<button class="${v===cur?'on':''}" onclick="LTFgo('${v}')"><span class="pill">${ic(i,22)}</span>${l}</button>`).join(''); }
+function appbar(title, back, right, big){ return `<header class="appbar${big?' big':''}">${back?`<button class="ibtn" onclick="LTFgo('${back}')" aria-label="back">${ic('back')}</button>`:''}<div class="abt">${title||''}</div>${right||''}</header>`; }
+function header(title, back){ return appbar(title, back||'hub'); }
+function flowbar(pct, label, onX){ return `<header class="appbar flow"><button class="ibtn" id="fx" aria-label="close">${ic('x')}</button><div class="pbar"><i style="width:${pct}%"></i></div><div class="pl">${label}</div></header>`; }
+function bindX(back, ask){ const b=$('#fx'); if(b) b.onclick=()=>{ if(ask) confirmDlg(T('Quitter ?','Leave?'), T('Votre progression dans cette partie sera perdue.','Your progress in this round will be lost.'), T('Quitter','Leave'), ()=>go(back), true); else go(back); }; }
+let navPop = false;
+const go = window.LTFgo = (where, arg) => { clearInterval(timer); closeOverlays(); lastView=[where,arg];
+  if(!navPop){ try{ history.pushState({v:where}, ''); }catch(e){} } navPop=false;
+  tabbar(where); app.className = 'scr scr-'+where;
+  ({hub, chapter, study, quiz:()=>quiz(arg,10), chrono, exam, review, revise, carte, settings, bar, planFind, cert}[where] || hub)(arg);
+  window.scrollTo(0,0); app.classList.remove('enter'); void app.offsetWidth; app.classList.add('enter'); };
+addEventListener('popstate', () => { if(document.querySelector('.ov')){ closeOverlays(); try{ history.pushState({}, ''); }catch(e){} return; } const p = PARENT[lastView[0]]; if(p){ navPop=true; go(p); } });
 let curCh = null, timer = null;
-const langBtn = () => `<button class="ghost lang" onclick="LTFlang('${EN?'fr':'en'}')">${EN?'🇫🇷 FR':'🇬🇧 EN'}</button>`;
+const langBtn = () => `<button class="hlang" onclick="LTFlang('${EN?'fr':'en'}')">${EN?'FR':'EN'}</button>`;
+const ring = (p, big) => `<div class="ring${big?' big':''}" style="--p:${p}"><span>${p}%</span></div>`;
 
+// ---------- screens ----------
 function hub(){
   const lvl = S.xp%300;
-  app.innerHTML = `
-  <div class="hero" style="background-image:url('${window.HERO||''}')">${langBtn()}<div class="heroin"><div class="kicker">Sofitel Marseille Vieux-Port</div><h1>Les Trois Forts</h1><div class="sub">Service Academy</div></div></div>
-  <div class="card stats"><div><b>${rank()}</b><div class="bar"><i style="width:${lvl/3}%"></i></div><small>${S.xp} XP · ${300-lvl} ${T('XP avant le prochain rang','XP to the next rank')}</small></div>
-  <div class="pills"><span>🔥 ${S.streak} ${T('j','d')}</span><span>🎯 ${mastery()}%</span></div></div>
-  <div class="row3"><button class="big" onclick="LTFgo('exam')">🎓 ${T('Examen final','Final exam')}</button><button class="big" onclick="LTFgo('review')">🔁 ${T('Mes erreurs','My mistakes')} (${S.review.length})</button><button class="big" onclick="LTFgo('carte')">📖 ${T('La Carte','The Menu')}</button></div>
-  <div class="grid">${CH.map(c=>`<button class="tile" onclick="LTFgo('chapter','${c.id}')"><div class="ic">${c.icon}</div><div class="tn">${c.name}</div><div class="ts">${c.sub}</div><div class="ring"><i style="width:${mastery(c.id)}%"></i></div><small>${mastery(c.id)}% ${T('maîtrisé','mastered')}</small></button>`).join('')}</div>
-  <div class="foot"><button class="ghost" onclick="LTFgo('settings')">⚙️ ${T('Réglages','Settings')}</button></div>`;
-}
-
-function chapter(id){ curCh = id || curCh; const c = CH.find(x=>x.id===curCh); const n = items.filter(i=>i.ch===curCh).length;
-  app.innerHTML = header(c.icon+' '+c.name) + `<div class="card"><p>${c.sub}</p><p><b>${n}</b> ${T('éléments','items')} · ${mastery(curCh)}% ${T('maîtrisé','mastered')} · ${T('record chrono','chrono best')} : ${S.best[curCh]||0}</p></div>
-  <div class="modes">
-   <button class="big" onclick="LTFgo('study')">📚 ${T('Étudier','Study')}<small>${T('Cartes recto-verso','Flashcards')}</small></button>
-   ${curCh==='plan' ? `<button class="big" onclick="LTFgo('planFind')">📍 ${T('Trouve la table','Find the table')}<small>${T('Touchez la table annoncée','Tap the table called out')}</small></button><button class="big" onclick="LTFgo('quiz')">🔢 ${T('Quel numéro ?','Which number?')}<small>${T('10 questions','10 questions')}</small></button>` : `<button class="big" onclick="LTFgo('quiz')">❓ Quiz<small>10 questions</small></button>`}
-   <button class="big" onclick="LTFgo('chrono')">⏱️ Chrono<small>${T('60 secondes, combos','60 seconds, combos')}</small></button>
-   ${curCh==='cock' ? `<button class="big" onclick="LTFgo('bar')">🍸 ${T('Le Bar','The Bar')}<small>${T('Montez le cocktail','Build the cocktail')}</small></button>`:''}
+  app.innerHTML = `<div class="hero" style="background-image:url('${window.HERO||''}')">${langBtn()}<div class="heroin"><div class="kicker">Sofitel Marseille Vieux-Port</div><h1>Les Trois Forts</h1><div class="sub">Service Academy</div></div></div>
+  <div class="pad">
+  <div class="card rankc"><div class="row"><div class="grow"><div class="muted">${T('Votre rang','Your rank')}</div><div class="rk">${rank()}</div></div>
+   <div class="stat st1">${ic('flame',20)}<span>${S.streak} ${T('j','d')}</span></div><div class="stat st2">${ic('target',20)}<span>${mastery()}%</span></div></div>
+   <div class="bar"><i style="width:${lvl/3}%"></i></div><div class="muted sm">${S.xp} XP · ${300-lvl} ${T('XP avant le prochain rang','XP to the next rank')}</div></div>
+  <div class="qa"><button class="card" onclick="LTFgo('exam')">${ic('cap',24)}<span>${T('Examen','Exam')}</span></button><button class="card" onclick="LTFgo('review')">${ic('redo',24)}<span>${T('Erreurs','Mistakes')} · ${S.review.length}</span></button><button class="card" onclick="LTFgo('carte')">${ic('book',24)}<span>${T('La Carte','Menu')}</span></button></div>
+  <div class="sh">${T('Chapitres','Chapters')}</div>
+  ${CH.map(c=>`<button class="li" onclick="LTFgo('chapter','${c.id}')"><div class="av">${ic(CHIC[c.id]||'star',22)}</div><div class="tx"><div class="n">${c.name}</div><div class="muted">${c.sub}</div></div>${ring(mastery(c.id))}</button>`).join('')}
   </div>`;
 }
 
-// Study
+function chapter(id){ curCh = id || curCh; const c = CH.find(x=>x.id===curCh); const its = items.filter(i=>i.ch===curCh); const n = its.length; const mast = its.filter(i=>(S.m[i.id]||{}).s>=3).length;
+  const idx = CH.indexOf(c)+1;
+  const modes = [['study','cards',T('Étudier','Study'),T('Cartes recto-verso avec photos','Flashcards with photos'),n+' '+T('cartes','cards')]];
+  if(curCh==='plan'){ modes.push(['planFind','pin',T('Trouve la table','Find the table'),T('Touchez la table annoncée','Tap the table called out'),'10 tables']); modes.push(['quiz','quiz',T('Quel numéro ?','Which number?'),T('10 questions','10 questions'),'']); }
+  else modes.push(['quiz','quiz','Quiz',T('10 questions, explications','10 questions with explanations'),'']);
+  modes.push(['chrono','timer','Chrono',T('60 secondes, combos','60 seconds, combos'),T('Record','Best')+' '+(S.best[curCh]||0)]);
+  if(curCh==='cock') modes.push(['bar','glass',T('Le Bar','The Bar'),T('Montez le cocktail','Build the cocktail'),'']);
+  app.innerHTML = appbar('', 'hub') + `<div class="pad"><div class="kick2">${T('Chapitre','Chapter')} ${idx}</div><h1 class="ptitle">${c.name}</h1><div class="muted">${c.sub}</div>
+  <div class="card row mt">${ring(mastery(curCh), true)}<div><div class="b">${mast} / ${n} ${T('maîtrisés','mastered')}</div><div class="muted sm">${T('Une carte est maîtrisée après 3 bonnes réponses de suite.','A card is mastered after 3 correct answers in a row.')}</div></div></div>
+  <div class="sh">${T('Modes de jeu','Game modes')}</div>
+  ${modes.map(([v,i,t,s,r])=>`<button class="li tall" onclick="LTFgo('${v}')"><div class="av">${ic(i,22)}</div><div class="tx"><div class="n">${t}</div><div class="muted">${s}</div></div><div class="rt">${r?`<span class="muted sm">${r}</span>`:''}${ic('chev',18)}</div></button>`).join('')}
+  </div><div class="cta"><button class="btn" onclick="LTFgo('quiz')">${ic('quiz',20)} ${T('Lancer un quiz','Start a quiz')}</button></div>`;
+}
+
 function study(){ const pool = shuffle(items.filter(i=>i.ch===curCh)); let k=0;
-  const show = () => { if(k>=pool.length){ toast(T('Paquet terminé ! 🎉','Deck done! 🎉')); return go('chapter'); } const it = pool[k];
-    app.innerHTML = header(T('Étudier','Study'), 'chapter') + `<div class="prog">${k+1} / ${pool.length}</div>
-    <div class="flip" onclick="this.classList.toggle('on')"><div class="face front">${it.ch==='plan'?planSVG({hl:it.front, labels:false}):it.front}<small class="hint">${T('Touchez pour retourner','Tap to flip')}</small></div><div class="face back">${photoOf(it)?`<img class="bimg" src="${photoOf(it)}" alt="">`:''}${it.ch==='plan'?'<b>'+it.front+'</b><br>'+it.back:it.back}${it.info?`<button class="ib ibk" onclick="event.stopPropagation();LTFinfo('${it.id}')">ⓘ ${T('Infos client','Guest info')}</button>`:''}</div></div>
-    <div class="row2"><button class="bad" id="no">${T('À revoir','Review again')}</button><button class="good" id="yes">${T('Je savais','I knew it')}</button></div>`;
+  const show = () => { if(k>=pool.length){ toast(T('Paquet terminé !','Deck done!')); return go('chapter'); } const it = pool[k]; const ph = photoOf(it);
+    app.innerHTML = flowbar(100*k/pool.length, `${k+1}/${pool.length}`) + `<div class="pad">
+    <div class="flip" id="flip"><div class="face front">${it.ch==='plan'?planSVG({hl:it.front, labels:false}):`<div class="fq">${it.front}</div>`}<small class="hint">${T('Touchez pour retourner','Tap to flip')}</small></div><div class="face back">${ph?`<img class="bimg" src="${ph}" alt="">`:''}<div class="btxt">${it.ch==='plan'?'<b>'+it.front+'</b><br>'+it.back:it.back}</div>${it.info?`<button class="chip gold" onclick="event.stopPropagation();LTFinfo('${it.id}')">${ic('info',16)} ${T('Infos client','Guest info')}</button>`:''}</div></div></div>
+    <div class="abar fixed"><button class="btn sec grow" id="no">${T('À revoir','Review again')}</button><button class="btn grow ok" id="yes">${ic('check',20)} ${T('Je savais','I knew it')}</button></div>`;
+    bindX('chapter'); $('#flip').onclick=function(){ this.classList.toggle('on'); };
     $('#yes').onclick=()=>{record(it,true,2);k++;show();}; $('#no').onclick=()=>{record(it,false);k++;show();}; };
   show(); }
 
 // Quiz / exam engine
 const planQ = q => { const t=q.table; q.q=T('Quel est le numéro de la table en surbrillance ?','What is the number of the highlighted table?'); q.options=shuffle([t.id, ...shuffle(L.tables.filter(x=>x.id!==t.id).map(x=>x.id)).slice(0,3)]); q.answer=t.id; q.expl=''; q.svg=planSVG({hl:t.id, labels:false}); };
+const qPhoto = q => { const it=q.item; if(!it||q.svg) return ''; const ph=photoOf(it); if(!ph) return ''; const nm = norm(strip(it.front)); return nm && norm(q.q).includes(nm) ? `<img class="qimg" src="${ph}" alt="">` : ''; };
+const chName = id => { const c=CH.find(x=>x.id===id); return c?c.name:''; };
 function runQuiz(title, qs, back, onEnd, xp){
-  let k=0, score=0;
-  const show = () => { if(k>=qs.length) return onEnd(score, qs.length); const q = qs[k];
+  let k=0, score=0; const t0=Date.now();
+  const show = () => { closeOverlays(); if(k>=qs.length) return onEnd(score, qs.length, Math.round((Date.now()-t0)/1000)); const q = qs[k];
     if(q.plan) planQ(q);
-    app.innerHTML = header(title, back) + `<div class="prog">Question ${k+1} / ${qs.length} · ${score} ✓</div><div class="card q">${q.svg||''}<h2>${esc(q.q)}</h2></div>
-    <div class="opts">${q.options.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}</div><div id="fb"></div>`;
-    app.querySelectorAll('.opt').forEach(b=> b.onclick = () => { const ok = q.options[b.dataset.i]===q.answer; app.querySelectorAll('.opt').forEach(x=>{x.disabled=true; if(q.options[x.dataset.i]===q.answer) x.classList.add('right');}); if(!ok) b.classList.add('wrong'); if(ok) score++; beep(ok); record(q.item, ok, xp||10);
-      $('#fb').innerHTML = `<div class="card fb ${ok?'okc':'koc'}"><b>${ok?T('Bravo !','Well done!'):T('Pas tout à fait.','Not quite.')}</b> ${ok?'':T('Réponse','Answer')+' : '+esc(q.answer)+'. '}${q.expl?'<br><small>'+esc(q.expl)+'</small>':''}${q.item&&q.item.info?'<br>'+`<button class="ib ibk" onclick="LTFinfo('${q.item.id}')">ⓘ ${T('Infos client','Guest info')}</button>`:''}</div><button class="big next" id="nx">${T('Suivant','Next')} ›</button>`; $('#nx').onclick=()=>{k++;show();}; });
+    app.innerHTML = flowbar(100*k/qs.length, `${k+1}/${qs.length}`) + `<div class="pad">${q.svg?`<div class="card">${q.svg}</div>`:qPhoto(q)}<div class="muted sm">${title}${q.item?' · '+chName(q.item.ch):''}</div><h2 class="qq">${esc(q.q)}</h2>
+    <div class="opts">${q.options.map((o,i)=>`<button class="opt" data-i="${i}"><span class="k">${'ABCDEF'[i]}</span><span>${esc(o)}</span></button>`).join('')}</div></div>`;
+    bindX(back, k>0);
+    app.querySelectorAll('.opt').forEach(b=> b.onclick = () => { const ok = q.options[b.dataset.i]===q.answer; app.querySelectorAll('.opt').forEach(x=>{x.disabled=true; if(q.options[x.dataset.i]===q.answer){ x.classList.add('right'); x.querySelector('.k').innerHTML=ic('check',16);} }); if(!ok) b.classList.add('wrong'); if(ok) score++; beep(ok); record(q.item, ok, xp||10);
+      const d = document.createElement('div'); d.id='fb'; d.className='ov fbsheet '+(ok?'okc':'koc');
+      d.innerHTML = `<div class="fbt">${ic(ok?'check':'x',22)} ${ok?T('Bonne réponse !','Correct!')+` +${xp||10} XP`:T('Pas tout à fait','Not quite')}</div><div class="fbx">${ok?'':T('Réponse','Answer')+' : <b>'+esc(q.answer)+'</b>. '}${q.expl?esc(q.expl):''}</div><div class="fbb">${q.item&&q.item.info?`<button class="btn sec sq" onclick="LTFinfo('${q.item.id}')" aria-label="info">${ic('info',20)}</button>`:''}<button class="btn grow" id="nx">${T('Continuer','Continue')}</button></div>`;
+      document.body.appendChild(d); d.querySelector('#nx').onclick=()=>{k++;show();}; });
   }; show(); }
-function quiz(){ const qs=[]; for(let i=0;i<10;i++){ const q=randQ(curCh); if(q) qs.push(q);} runQuiz('Quiz', qs, 'chapter', (s,n)=>endScreen(s,n,'chapter')); }
-function endScreen(s,n,back){ const pct=Math.round(100*s/n); if(pct===100) confetti(); app.innerHTML = header(T('Résultat','Result'), back) + `<div class="card center"><div class="score">${s} / ${n}</div><p>${pct>=90?T('Digne d\'un Maître d\'hôtel ! ⭐','Maître d\'hôtel material! ⭐'):pct>=70?T('Très bon service 👏','Great service 👏'):pct>=50?T('On y est presque — révisez vos erreurs.','Almost there — review your mistakes.'):T('À retravailler, courage ! 💪','Keep at it! 💪')}</p><p>${rank()} · ${S.xp} XP</p></div><div class="row2"><button class="big" onclick="LTFgo('${back}')">${T('Retour','Back')}</button><button class="big good" onclick="LTFgo('review')">${T('Mes erreurs','My mistakes')}</button></div>`; }
+function quiz(){ const qs=[]; for(let i=0;i<10;i++){ const q=randQ(curCh); if(q) qs.push(q);} runQuiz('Quiz', qs, 'chapter', (s,n,t)=>endScreen(s,n,'chapter','quiz',t)); }
+const fmtT = t => t ? Math.floor(t/60)+':'+String(t%60).padStart(2,'0') : '';
+function endScreen(s,n,back,again,secs){ const pct=Math.round(100*s/n); if(pct===100) confetti();
+  const msg = pct>=90?T('Digne d\'un Maître d\'hôtel','Maître d\'hôtel material'):pct>=70?T('Très bon service','Great service'):pct>=50?T('On y est presque','Almost there'):T('À retravailler, courage','Keep at it');
+  app.innerHTML = flowbar(100, `${n}/${n}`); bindX(back);
+  const d = dialog(`<div class="dic">${ic(pct>=70?'award':'cap',40)}</div><div class="dscore">${s} / ${n}</div><div class="dt">${msg}</div><div class="muted">${rank()} · ${S.xp} XP</div>
+   <div class="dstats"><div><b>${pct}%</b><span>Score</span></div><div><b>${n-s}</b><span>${T('Erreurs','Mistakes')}</span></div>${secs?`<div><b>${fmtT(secs)}</b><span>${T('Temps','Time')}</span></div>`:''}</div>
+   <button class="btn" id="dag">${T('Rejouer','Play again')}</button>${n-s>0?`<button class="btn sec" id="drv">${T('Revoir mes erreurs','Review my mistakes')}</button>`:''}<button class="btn txt" id="dbk">${T('Terminer','Done')}</button>`, false);
+  d.querySelector('#dag').onclick=()=>go(again||back); const rv=d.querySelector('#drv'); if(rv) rv.onclick=()=>go('review'); d.querySelector('#dbk').onclick=()=>go(back); }
 
-function exam(){ const qs=[]; CH.forEach(c=>{ for(let i=0;i<3;i++){ const q=randQ(c.id); if(q) qs.push(q);} }); runQuiz(T('Examen final','Final exam'), shuffle(qs), 'hub', (s,n)=>{ const pct=Math.round(100*s/n); if(pct>=80){ S.exam={score:pct,date:new Date().toLocaleDateString(EN?'en-GB':'fr-FR')}; save(); go('cert'); } else endScreen(s,n,'hub'); }, 15); }
-function cert(){ confetti(); app.innerHTML = header(T('Certificat','Certificate')) + `<div class="cert"><div class="kicker">Les Trois Forts · Sofitel Marseille Vieux-Port</div><h1>${T('Certifié','Certified')}</h1><p>${T('a réussi l\'examen final de la Service Academy','passed the Service Academy final exam')}</p><div class="score">${S.exam.score}%</div><p>${S.exam.date} · ${rank()}</p></div><button class="big" onclick="LTFgo('hub')">${T('Retour','Back')}</button>`; }
+function exam(){ const qs=[]; CH.forEach(c=>{ for(let i=0;i<3;i++){ const q=randQ(c.id); if(q) qs.push(q);} }); runQuiz(T('Examen final','Final exam'), shuffle(qs), 'revise', (s,n,t)=>{ const pct=Math.round(100*s/n); if(pct>=80){ S.exam={score:pct,date:new Date().toLocaleDateString(EN?'en-GB':'fr-FR')}; save(); go('cert'); } else endScreen(s,n,'revise','exam',t); }, 15); }
+function cert(){ if(!S.exam) return revise(); confetti(); app.innerHTML = appbar(T('Certificat','Certificate'), 'revise') + `<div class="pad"><div class="cert"><div class="kicker">Les Trois Forts · Sofitel Marseille Vieux-Port</div><h1>${T('Certifié','Certified')}</h1><p>${T('a réussi l\'examen final de la Service Academy','passed the Service Academy final exam')}</p><div class="score">${S.exam.score}%</div><p>${S.exam.date} · ${rank()}</p></div></div>`; }
 
-function review(){ const its = S.review.map(id=>items.find(i=>i.id===id)).filter(Boolean); if(!its.length){ app.innerHTML = header(T('Mes erreurs','My mistakes'))+`<div class="card center"><p>${T('Aucune erreur à revoir. Impeccable ! ✨','No mistakes to review. Flawless! ✨')}</p></div>`; return; }
-  const qs = shuffle(its).slice(0,15).map(qFor).filter(Boolean); runQuiz(T('Révision','Review'), qs, 'hub', (s,n)=>endScreen(s,n,'hub')); }
+function revise(){ const its = S.review.map(id=>items.find(i=>i.id===id)).filter(Boolean);
+  app.innerHTML = appbar(T('Réviser','Review'), null, '', true) + `<div class="pad">
+  <button class="card hero2" onclick="LTFgo('review')" ${its.length?'':'disabled'}><div class="av big">${ic('redo',26)}</div><div class="tx"><div class="n">${T('Mes erreurs','My mistakes')}</div><div class="muted">${its.length?its.length+' '+T('à revoir · quiz de 15 max','to review · up to 15 questions'):T('Aucune erreur à revoir. Impeccable !','No mistakes to review. Flawless!')}</div></div>${its.length?ic('chev',18):''}</button>
+  <button class="card hero2" onclick="LTFgo('exam')"><div class="av big">${ic('cap',26)}</div><div class="tx"><div class="n">${T('Examen final','Final exam')}</div><div class="muted">${T('3 questions par chapitre · 80 % pour le certificat','3 questions per chapter · 80% for the certificate')}</div></div>${ic('chev',18)}</button>
+  ${S.exam?`<button class="card hero2" onclick="LTFgo('cert')"><div class="av big">${ic('award',26)}</div><div class="tx"><div class="n">${T('Mon certificat','My certificate')}</div><div class="muted">${S.exam.score}% · ${S.exam.date}</div></div>${ic('chev',18)}</button>`:''}
+  ${its.length?`<div class="sh">${T('À revoir','To review')}</div>`+its.slice(0,40).map(i=>{ const ph=photoOf(i); return `<div class="li" ${i.info?`onclick="LTFinfo('${i.id}')"`:''}>${ph?`<img class="thumb" src="${ph}" loading="lazy" alt="">`:`<div class="av">${ic(CHIC[i.ch]||'star',20)}</div>`}<div class="tx"><div class="n">${i.ch==='plan'?T('Table','Table')+' '+i.front:i.front}</div><div class="muted sm">${chName(i.ch)}</div></div></div>`; }).join(''):''}
+  </div>`; }
+function review(){ const its = S.review.map(id=>items.find(i=>i.id===id)).filter(Boolean); if(!its.length) return go('revise');
+  const qs = shuffle(its).slice(0,15).map(qFor).filter(Boolean); runQuiz(T('Révision','Review'), qs, 'revise', (s,n,t)=>endScreen(s,n,'revise','review',t)); }
 
 function chrono(){ let t=60, score=0, combo=1, best=S.best[curCh]||0;
   const next = () => { const q = randQ(curCh); if(!q) return;
     if(q.plan) planQ(q);
-    $('#cq').innerHTML = `${q.svg||''}<h2>${esc(q.q)}</h2>`; $('#co').innerHTML = q.options.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join('');
+    $('#cq').innerHTML = `${q.svg?`<div class="card">${q.svg}</div>`:''}<h2 class="qq">${esc(q.q)}</h2>`; $('#co').innerHTML = q.options.map((o,i)=>`<button class="opt" data-i="${i}"><span class="k">${'ABCDEF'[i]}</span><span>${esc(o)}</span></button>`).join('');
     app.querySelectorAll('#co .opt').forEach(b=> b.onclick=()=>{ const ok=q.options[b.dataset.i]===q.answer; beep(ok); record(q.item, ok, 0); if(ok){ score += 10*combo; combo=Math.min(combo+1,5); flash('okf'); } else { combo=1; flash('kof'); toast(T('Réponse','Answer')+' : '+q.answer); } $('#cs').textContent=score; $('#cc').textContent='×'+combo; next(); }); };
-  app.innerHTML = header('Chrono', 'chapter') + `<div class="hud"><span>⏱️ <b id="ct">60</b>s</span><span>Score <b id="cs">0</b></span><span>Combo <b id="cc">×1</b></span></div><div class="card q" id="cq"></div><div class="opts" id="co"></div>`;
-  next(); timer = setInterval(()=>{ t--; const el=$('#ct'); if(el) el.textContent=t; if(t<=0){ clearInterval(timer); S.xp += Math.round(score/5); if(score>best){S.best[curCh]=score;} save(); app.innerHTML = header('Chrono', 'chapter')+`<div class="card center"><div class="score">${score}</div><p>${score>best?T('Nouveau record ! 🏆','New record! 🏆'):T('Record','Best')+' : '+best}</p><p>+${Math.round(score/5)} XP</p></div><div class="row2"><button class="big" onclick="LTFgo('chrono')">${T('Rejouer','Play again')}</button><button class="big" onclick="LTFgo('chapter')">${T('Retour','Back')}</button></div>`; } },1000); }
+  app.innerHTML = flowbar(100, '') + `<div class="pad"><div class="hud"><div>${ic('timer',18)}<b id="ct">60</b>s</div><div>Score <b id="cs">0</b></div><div>Combo <b id="cc">×1</b></div></div><div id="cq"></div><div class="opts" id="co"></div></div>`;
+  bindX('chapter', true); const pb = app.querySelector('.pbar i');
+  next(); timer = setInterval(()=>{ t--; const el=$('#ct'); if(el) el.textContent=t; if(pb) pb.style.width=(100*t/60)+'%'; if(t<=0){ clearInterval(timer); closeOverlays(); S.xp += Math.round(score/5); const rec = score>best; if(rec){S.best[curCh]=score;} save(); if(rec) confetti();
+    const d = dialog(`<div class="dic">${ic(rec?'award':'timer',40)}</div><div class="dscore">${score}</div><div class="dt">${rec?T('Nouveau record !','New record!'):T('Record','Best')+' : '+best}</div><div class="muted">+${Math.round(score/5)} XP</div><div class="dstats"></div><button class="btn" id="dag">${T('Rejouer','Play again')}</button><button class="btn txt" id="dbk">${T('Terminer','Done')}</button>`, false);
+    d.querySelector('#dag').onclick=()=>go('chrono'); d.querySelector('#dbk').onclick=()=>go('chapter'); } },1000); }
 
 // Bar: build the cocktail
 function bar(){ const it = pick(items.filter(i=>i.cocktail)); const c = it.cocktail; const need = c.recipe.map(r=>W(r[0]));
   const shelf = shuffle(uniq(need.concat(shuffle(allIngr.filter(x=>!need.includes(x))).slice(0,Math.max(4,8-need.length)))));
   const glasses = uniq(L.cocktails.map(x=>W(x.glass))); const garn = uniq(L.cocktails.map(x=>W(x.garnish)));
-  let sel = new Set(), g=null, gn=null;
-  app.innerHTML = header(T('Le Bar','The Bar'), 'chapter') + `<div class="card barbg"><div class="kicker">${T('Commande','Order')}</div><h2>${c.n}</h2>${c.batch?'<small>'+T('Préparation','Batch')+' '+cBatch(c)+'</small>':''}</div>
-  <h3>1. ${T('Les ingrédients','Ingredients')}</h3><div class="chips" id="sh">${shelf.map(s=>`<button class="chip" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>
-  <h3>2. ${T('Le verre','Glass')}</h3><div class="chips" id="gl">${glasses.map(s=>`<button class="chip" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>
-  <h3>3. ${T('La garniture','Garnish')}</h3><div class="chips" id="ga">${garn.map(s=>`<button class="chip" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>
-  <button class="big good" id="serve">${T('Servir','Serve')} 🍸</button><div id="res"></div>`;
+  let sel = new Set(), g=null, gn=null; const ph = photoOf(it);
+  app.innerHTML = appbar(T('Le Bar','The Bar'), 'chapter') + `<div class="pad"><div class="card order">${ph?`<img class="thumb" src="${ph}" alt="">`:''}<div><div class="kick2">${T('Commande','Order')}</div><div class="ptitle sm">${c.n}</div>${c.batch?'<div class="muted sm">'+T('Préparation','Batch')+' '+cBatch(c)+'</div>':''}</div></div>
+  <div class="sh">1. ${T('Les ingrédients','Ingredients')}</div><div class="chips" id="sh">${shelf.map(s=>`<button class="chip" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+  <div class="sh">2. ${T('Le verre','Glass')}</div><div class="chips" id="gl">${glasses.map(s=>`<button class="chip" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+  <div class="sh">3. ${T('La garniture','Garnish')}</div><div class="chips" id="ga">${garn.map(s=>`<button class="chip" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>
+  <div class="abar fixed"><button class="btn grow" id="serve">${ic('glass',20)} ${T('Servir','Serve')}</button></div>`;
   app.querySelectorAll('#sh .chip').forEach(b=>b.onclick=()=>{ b.classList.toggle('on'); sel.has(b.dataset.v)?sel.delete(b.dataset.v):sel.add(b.dataset.v); });
   const single=(id,setter)=>app.querySelectorAll(id+' .chip').forEach(b=>b.onclick=()=>{ app.querySelectorAll(id+' .chip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); setter(b.dataset.v); });
   single('#gl',v=>g=v); single('#ga',v=>gn=v);
   $('#serve').onclick=()=>{ const okI = need.every(n=>sel.has(n)) && sel.size===need.length; const okG = g===W(c.glass), okN = gn===W(c.garnish); const pts=[okI,okG,okN].filter(Boolean).length; const ok = pts===3; beep(ok); record(it, ok, 10*pts); if(ok) confetti();
-    $('#res').innerHTML = `<div class="card fb ${ok?'okc':'koc'}"><b>${pts}/3 ${ok?T('— Parfait, envoyé !','— Perfect, sent!'):''}</b><br>${okI?'✅':'❌'} ${T('Ingrédients','Ingredients')} · ${okG?'✅':'❌'} ${T('Verre','Glass')} · ${okN?'✅':'❌'} ${T('Garniture','Garnish')}<hr>${it.back} ${ib(it)}</div><div class="row2"><button class="big" onclick="LTFgo('bar')">${T('Cocktail suivant','Next cocktail')}</button><button class="big" onclick="LTFgo('chapter')">${T('Retour','Back')}</button></div>`; $('#serve').disabled=true; };
+    const mk = (o,l) => `<div class="ckr ${o?'y':'n'}">${ic(o?'check':'x',18)} ${l}</div>`;
+    sheet(`<div class="stitle">${pts}/3 ${ok?T('· Parfait, envoyé !','· Perfect, sent!'):''}</div><div class="ckrow">${mk(okI,T('Ingrédients','Ingredients'))}${mk(okG,T('Verre','Glass'))}${mk(okN,T('Garniture','Garnish'))}</div><div class="sdesc">${it.back}</div>`,
+      {bar:`${it.info?`<button class="btn sec sq" onclick="LTFinfo('${it.id}')">${ic('info',20)}</button>`:''}<button class="btn sec grow" onclick="LTFgo('chapter')">${T('Retour','Back')}</button><button class="btn grow" onclick="LTFgo('bar')">${T('Suivant','Next')}</button>`}); };
 }
 
 // Floor plan
@@ -352,19 +453,40 @@ function planSVG(o){ o=o||{}; const sz=5.2; let s=`<svg class="plan" viewBox="-3
     s += shape + (lab?`<text x="${t.x}" y="${t.y+1.2}" class="tl">${t.id}</text>`:''); });
   return s+'</svg>'; }
 function planFind(){ let k=0, score=0; const order = shuffle(L.tables).slice(0,10);
-  const show=()=>{ if(k>=order.length) return endScreen(score, order.length, 'chapter'); const t = order[k]; const it = items.find(i=>i.ch==='plan'&&i.front===t.id);
-    app.innerHTML = header(T('Trouve la table','Find the table'), 'chapter') + `<div class="prog">${k+1} / ${order.length} · ${score} ✓</div><div class="card center"><h2>${T('Touchez la table','Tap table')} <span class="gold">${t.id}</span></h2>${planSVG({labels:false})}</div><div id="fb"></div>`;
+  const show=()=>{ closeOverlays(); if(k>=order.length) return endScreen(score, order.length, 'chapter', 'planFind'); const t = order[k]; const it = items.find(i=>i.ch==='plan'&&i.front===t.id);
+    app.innerHTML = flowbar(100*k/order.length, `${k+1}/${order.length}`) + `<div class="pad"><h2 class="qq">${T('Touchez la table','Tap table')} <span class="gold">${t.id}</span></h2><div class="card" id="pc">${planSVG({labels:false})}</div></div>`;
+    bindX('chapter', k>0);
     app.querySelectorAll('svg [data-id]').forEach(el=> el.onclick=()=>{ const ok = el.dataset.id===t.id; beep(ok); record(it, ok, 10); if(ok) score++;
-      $('.card.center').innerHTML = `<h2>${ok?T('Exact !','Correct!'):T('C\'était ici :','It was here:')} <span class="gold">${t.id}</span></h2>`+planSVG({labels:true, hl:t.id}); $('#fb').innerHTML=`<button class="big next" id="nx">${T('Suivant','Next')} ›</button>`; $('#nx').onclick=()=>{k++;show();}; }); };
+      $('#pc').innerHTML = planSVG({labels:true, hl:t.id});
+      const d = document.createElement('div'); d.className='ov fbsheet '+(ok?'okc':'koc'); d.innerHTML=`<div class="fbt">${ic(ok?'check':'x',22)} ${ok?T('Exact !','Correct!'):T('C\'était ici','It was here')} · ${t.id}</div><div class="fbb"><button class="btn grow" id="nx">${T('Continuer','Continue')}</button></div>`; document.body.appendChild(d); d.querySelector('#nx').onclick=()=>{k++;show();}; }); };
   show(); }
 
 // Carte
-function carte(){ app.innerHTML = header(T('La Carte','The Menu')) + `<input id="srch" class="srch" placeholder="${T('Rechercher un plat, un vin, un cocktail…','Search a dish, a wine, a cocktail…')}"><div id="list"></div>`;
-  const render = () => { const f = norm($('#srch').value); $('#list').innerHTML = CH.map(c=>{ const its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+i.back.replace(/<[^>]+>/g,' ')+' '+(i.info||'').replace(/<[^>]+>/g,' ')).includes(f)); if(!its.length) return ''; return `<h3>${c.icon} ${c.name}</h3>`+its.map(i=>{ const ph=photoOf(i); return `<div class="li"><div class="lirow">${ph?`<img class="th" src="${ph}" loading="lazy" alt="" onclick="LTFinfo('${i.id}')">`:''}<div class="lit"><b>${i.front}</b><div>${i.back}</div></div>${ib(i)}</div></div>`; }).join(''); }).join('') + `<h3>📌 ${T('À retenir','Key facts')}</h3>`+FACTS.map(x=>`<div class="li">${esc(x)}</div>`).join(''); };
+let carteCat = 'all';
+window.LTFcat = c => { carteCat = c; const v=$('#srch')?$('#srch').value:''; carte(); $('#srch').value=v; $('#srch').oninput(); };
+function carte(){ const cats = [['all',T('Tout','All')]].concat(CH.filter(c=>c.id!=='plan').map(c=>[c.id,c.name])).concat([['facts',T('À retenir','Key facts')]]);
+  app.innerHTML = appbar(T('La Carte','The Menu'), null, '', true) + `<div class="sticky"><label class="srch">${ic('search',18)}<input id="srch" placeholder="${T('Plat, vin, cocktail…','Dish, wine, cocktail…')}" autocomplete="off"></label>
+  <div class="chips scroll">${cats.map(([v,l])=>`<button class="chip ${carteCat===v?'on':''}" onclick="LTFcat('${v}')">${l}</button>`).join('')}</div></div><div class="pad" id="list"></div>`;
+  const render = () => { const f = norm($('#srch').value);
+    const blocks = CH.filter(c=>c.id!=='plan' && (carteCat==='all'||carteCat===c.id)).map(c=>{ const its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+strip(i.back)+' '+strip(i.info)).includes(f)); if(!its.length) return '';
+      return `<div class="sh">${c.name}</div>`+its.map(i=>{ const ph=photoOf(i); return `<div class="li menu" ${i.info?`onclick="LTFinfo('${i.id}')"`:''}>${ph?`<img class="thumb" src="${ph}" loading="lazy" alt="">`:`<div class="av">${ic(CHIC[c.id]||'star',20)}</div>`}<div class="tx"><div class="n">${i.front}</div><div class="muted sm clamp">${i.back}</div></div>${i.info?`<span class="rt">${ic('chev',18)}</span>`:''}</div>`; }).join(''); }).join('');
+    const facts = (carteCat==='all'||carteCat==='facts') ? FACTS.filter(x=>norm(x).includes(f)) : [];
+    $('#list').innerHTML = (blocks + (facts.length?`<div class="sh">${T('À retenir','Key facts')}</div><div class="card">`+facts.map(x=>`<p class="fact">${esc(x)}</p>`).join('')+'</div>':'')) || `<div class="empty muted">${T('Aucun résultat','No results')}</div>`; };
   $('#srch').oninput = render; render(); }
 
-function settings(){ app.innerHTML = header(T('Réglages','Settings')) + `<div class="card"><div class="sw">🌐 ${T('Langue','Language')} : <button class="chip ${EN?'':'on'}" onclick="LTFlang('fr')">Français</button><button class="chip ${EN?'on':''}" onclick="LTFlang('en')">English</button></div></div><div class="card"><label class="sw"><input type="checkbox" id="snd" ${S.sound?'checked':''}> ${T('Effets sonores','Sound effects')}</label></div><div class="card"><p>${T('Contenu transcrit des cartes réelles du restaurant (octobre 2026). La formule de la semaine change chaque semaine.','Content transcribed from the restaurant\'s real menus (October 2026). The weekly formula changes every week.')}</p><p>${T('Les fiches ⓘ donnent un texte court à dire au client (en français ; passez en English pour la version anglaise).','The ⓘ notes give a short line to tell the guest (switch to Français for the French version).')}</p><p>${T('📷 Photos : touchez ⓘ puis « Prendre ma photo » pour remplacer la photo d\'illustration par la vraie. Vos photos restent sur ce téléphone.','📷 Photos: tap ⓘ then "Take my photo" to replace the sample picture with the real one. Your photos stay on this phone.')}</p><p class="warn">${ALLERGY}</p></div><button class="big bad" id="rst">${T('Réinitialiser la progression','Reset progress')}</button>`;
-  $('#snd').onchange=e=>{S.sound=e.target.checked;save();}; $('#rst').onclick=()=>{ if(confirm(T('Effacer toute la progression ?','Erase all progress?'))){ S={xp:0,m:{},best:{},review:[],streak:1,last:S.last,sound:S.sound,exam:null,lang:S.lang}; save(); go('hub'); } }; }
+function settings(){ const lvl = S.xp%300; const th = S.theme||'auto';
+  const seg = (opts, cur, fn) => `<div class="seg">${opts.map(([v,l])=>`<button class="${v===cur?'on':''}" onclick="${fn}('${v}')">${l}</button>`).join('')}</div>`;
+  app.innerHTML = appbar(T('Profil','Profile'), null, '', true) + `<div class="pad">
+  <div class="card row"><div class="av big">${ic('user',26)}</div><div class="grow"><div class="rk">${rank()}</div><div class="bar"><i style="width:${lvl/3}%"></i></div><div class="muted sm">${S.xp} XP · ${mastery()}% ${T('maîtrisé','mastered')} · ${S.streak} ${T('j de suite','day streak')}</div></div></div>
+  <div class="sh">${T('Apparence','Appearance')}</div>
+  <div class="card"><div class="lrow">${ic('palette',20)}<span>${T('Thème','Theme')}</span></div>${seg([['auto','Auto'],['light',T('Clair','Light')],['dark',T('Sombre','Dark')],['black',T('Noir','Black')]], th, 'LTFtheme')}
+   <div class="lrow mt">${ic('globe',20)}<span>${T('Langue','Language')}</span></div>${seg([['fr','Français'],['en','English']], EN?'en':'fr', 'LTFlang')}</div>
+  <div class="card"><label class="lrow sw">${ic('sound',20)}<span class="grow">${T('Effets sonores','Sound effects')}</span><input type="checkbox" id="snd" ${S.sound?'checked':''}><i class="tg"></i></label></div>
+  <div class="sh">${T('À propos','About')}</div>
+  <div class="card sm"><p>${T('Contenu transcrit des cartes réelles du restaurant (octobre 2026). La formule de la semaine change chaque semaine.','Content transcribed from the restaurant\'s real menus (October 2026). The weekly formula changes every week.')}</p><p>${T('Photos : ouvrez une fiche puis « Prendre ma photo » pour remplacer la photo d\'illustration. Vos photos restent sur ce téléphone.','Photos: open an item, then "Take my photo" to replace the sample picture. Your photos stay on this phone.')}</p><p class="warn">${ALLERGY}</p></div>
+  <button class="btn danger wide" id="rst">${ic('trash',20)} ${T('Réinitialiser la progression','Reset progress')}</button></div>`;
+  $('#snd').onchange=e=>{S.sound=e.target.checked;save();};
+  $('#rst').onclick=()=>confirmDlg(T('Tout effacer ?','Erase everything?'), T('XP, rang, records et erreurs seront remis à zéro. Vos photos sont conservées.','XP, rank, records and mistakes will be reset. Your photos are kept.'), T('Effacer','Erase'), ()=>{ S={xp:0,m:{},best:{},review:[],streak:1,last:S.last,sound:S.sound,exam:null,lang:S.lang,theme:S.theme}; save(); go('hub'); }, true); }
 
 // FX
 function toast(t){ const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),1800); }
@@ -373,6 +495,6 @@ function confetti(){ const cv=document.createElement('canvas'); cv.className='co
 
 // self-test
 window.LTFtest = () => { let bad=0; items.forEach(it=>it.gens.forEach(g=>{ const q=g(); if(!q){return;} if(q.plan) return; if(!q.options.includes(q.answer)||new Set(q.options).size!==q.options.length) {bad++; console.warn('bad',it.id,q);} })); const noInfo = items.filter(i=>!i.fact&&i.ch!=='plan'&&(!i.info||!/💬/.test(i.info)||/💬[^<]*<\/div><div><\/div>/.test(i.info))).map(i=>i.id); return {items:items.length, bad, noInfo}; };
-hub();
+try{ history.replaceState({v:'hub'},''); }catch(e){} navPop=true; go('hub');
 idbOpen().then(idbAll).then(()=>{ if(Object.keys(PH).length && lastView[0]==='carte') refresh(); });
 })();
