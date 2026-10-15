@@ -78,6 +78,19 @@ function infoCoffee(c){ return sec('🇬🇧', T('En anglais','In English'), esc
 function infoDig(d){ return sec('🇬🇧', T('En anglais','In English'), esc((LE.digestifs||{})[d.n]||'')) + sec(SAY, ttlSay, esc((LI.digestif||{})[d.n]||'')); }
 function infoPair(w){ const e=(LE.pairing||{})[w.n]||{}; const say = EN ? `The ${({'Entrée':'starter','Plat poisson':'fish course','Plat viande':'meat course','Dessert':'dessert'})[w.course]} pairing of the Tasting Menu (+55 € per person). ${e.t||''}.` : `L'accord ${({'Entrée':'de l\'entrée','Plat poisson':'du plat poisson','Plat viande':'du plat viande','Dessert':'du dessert'})[w.course]} du Menu Dégustation (+55 € par personne). ${w.t}.`; return sec(SAY, ttlSay, esc(say)) + sec('🍇', T('Cépages','Grapes'), esc(EN?(e.g||w.g):w.g)); }
 
+// ---------- photos ----------
+const IMG = window.LTF_IMG || {};
+const PAIRKEY = {"Susucaru Rosato — Sicile":"w:Frank Cornelissen, Susucaru Rosato|Rosé","Indigena Blanc — Espagne":"w:Domaine Parés Baltà, Cuvée Indigena|Blanc","Octave Blanc — Grèce":"w:Sous le Végétal, Cuvée Octave|Blanc","Pero Longo Rouge — Corse":"w:Domaine Pero Longo, Cuvée Équilibre|Rouge","Indigena Rouge — Espagne":"w:Domaine Parés Baltà, Cuvée Indigena|Rouge","Câlin Polisson — Provence":"g:Câlin Polisson"};
+const firstKey = (...ks) => ks.find(k=>k && IMG[k]) || ks[0];
+const PH = {}; // custom photos taken by the user: ikey -> dataURL
+const PHDEF = {Blanc:'img/_ph-blanc.jpg',Rosé:'img/_ph-rose.jpg',Rouge:'img/_ph-rouge.jpg'};
+function photoOf(it){ if(!it||!it.ikey) return null; return PH[it.ikey] || IMG[it.ikey] || it.phdef || null; }
+let idb=null;
+function idbOpen(){ return new Promise(res=>{ try{ if(!window.indexedDB) return res(null); const r=indexedDB.open('ltf_photos',1); r.onupgradeneeded=()=>r.result.createObjectStore('p'); r.onsuccess=()=>{idb=r.result;res(idb);}; r.onerror=()=>res(null);}catch(e){res(null);} }); }
+function idbAll(){ return new Promise(res=>{ if(!idb) return res(); const tx=idb.transaction('p'); const st=tx.objectStore('p'); const rq=st.openCursor(); rq.onsuccess=()=>{ const c=rq.result; if(c){ PH[c.key]=c.value; c.continue(); } else res(); }; rq.onerror=()=>res(); }); }
+function idbPut(k,v){ return new Promise(res=>{ if(!idb) return res(); const tx=idb.transaction('p','readwrite'); v===null?tx.objectStore('p').delete(k):tx.objectStore('p').put(v,k); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }); }
+function shrink(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{ const M=900, sc=Math.min(1,M/Math.max(im.width,im.height)); const cv=document.createElement('canvas'); cv.width=Math.round(im.width*sc); cv.height=Math.round(im.height*sc); cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height); res(cv.toDataURL('image/jpeg',0.8)); }; im.onerror=rej; im.src=fr.result; }; fr.onerror=rej; fr.readAsDataURL(file); }); }
+
 // ---------- build: dishes ----------
 const dishes = L.dishes;
 const sections = uniq(dishes.map(d=>d.s));
@@ -104,7 +117,7 @@ dishes.forEach(d=>{
       return mcq(T(`D'après la carte, que contient « ${d.n} » ?`,`According to the menu, what does "${d.n}" contain?`), t, A, ALLERGY);
     });
     const desc = EN ? (dEn(d)?esc(dEn(d))+'<br><small>'+esc(d.d)+'</small><br>':'') : `${d.d?d.d+'<br>':''}${d.en?'<i>'+esc(d.en)+'</i><br>':''}`;
-    add(c, d.n + (EN&&dEn(d)?'':'' ), `${desc}<b>${W(d.s)}</b> · ${svcLabel(d)}${d.p!==null?' · '+dishPrice(d):''}${d.p2?' / '+eur(d.p2)+' '+p2lab(d):''}`, gens, {info: infoDish(d)});
+    add(c, d.n + (EN&&dEn(d)?'':'' ), `${desc}<b>${W(d.s)}</b> · ${svcLabel(d)}${d.p!==null?' · '+dishPrice(d):''}${d.p2?' / '+eur(d.p2)+' '+p2lab(d):''}`, gens, {info: infoDish(d), ikey:'d:'+d.n});
   });
 });
 
@@ -158,24 +171,24 @@ L.cocktails.forEach(c=>{
   if(c.garnish && c.garnish!=='—') gens.push(()=>mcq(T(`Garniture de « ${c.n} » ?`,`Garnish for "${c.n}"?`), W(c.garnish), uniq(L.cocktails.map(x=>W(x.garnish))).filter(g=>g!=='—'), ''));
   c.recipe.filter(r=>typeof r[1]==='number').forEach(r=> gens.push(()=>mcq(EN?`How much ${W(r[0])} in "${c.n}"${c.batch?' (batch: '+cBatch(c)+')':''}?`:`Combien de ${r[0]} dans « ${c.n} »${c.batch?' (préparation '+c.batch+')':''} ?`, dose(r[1]), doses, recipeTxt(c)+(c.note?' — '+cNote(c):''))));
   const desc = EN ? `<i>${esc(ce(c).desc||c.desc)}</i><br>` : '';
-  add('cock', c.n, `${desc}<b>${recipeTxt(c)}</b>${c.batch?'<br>'+T('Préparation','Batch')+' : '+cBatch(c):''}<br>${T('Verre','Glass')} : ${W(c.glass)} · ${T('Garniture','Garnish')} : ${W(c.garnish)}<br>${esc(cMethod(c))}<br>${T('Prix','Price')} : ${eur(c.p)}${c.note?'<br><span class="warn">⚠ '+esc(cNote(c))+'</span>':''}`, gens, {cocktail:c, info: infoCock(c)});
+  add('cock', c.n, `${desc}<b>${recipeTxt(c)}</b>${c.batch?'<br>'+T('Préparation','Batch')+' : '+cBatch(c):''}<br>${T('Verre','Glass')} : ${W(c.glass)} · ${T('Garniture','Garnish')} : ${W(c.garnish)}<br>${esc(cMethod(c))}<br>${T('Prix','Price')} : ${eur(c.p)}${c.note?'<br><span class="warn">⚠ '+esc(cNote(c))+'</span>':''}`, gens, {cocktail:c, info: infoCock(c), ikey:'k:'+c.n, phdef:'img/_ph-soft.jpg'});
 });
 const sD = s => EN&&(LE.softs||{})[s.n] ? LE.softs[s.n] : s.d;
-L.softs.forEach(s=> add('cock', s.n, `${sD(s)} · ${eur(s.p)}`, [()=>mcq(T(`Prix de « ${s.n} » (${s.d}) ?`,`Price of "${s.n}" (${sD(s)})?`), eur(s.p), L.softs.map(x=>eur(x.p)).concat(['9 €','12 €']), '')], {info: infoSoft(s)}));
+L.softs.forEach(s=> add('cock', s.n, `${sD(s)} · ${eur(s.p)}`, [()=>mcq(T(`Prix de « ${s.n} » (${s.d}) ?`,`Price of "${s.n}" (${sD(s)})?`), eur(s.p), L.softs.map(x=>eur(x.p)).concat(['9 €','12 €']), '')], {info: infoSoft(s), ikey: firstKey('s:'+s.n,'k:'+s.n), phdef:'img/_ph-soft.jpg'}));
 
 // Coffee & teas
 const coffeeNote = EN && LE.coffeeNote ? LE.coffeeNote : L.coffeeNote;
 const cfN = c => EN&&(LE.coffee||{})[c.n] ? LE.coffee[c.n] : c.n;
 L.coffee.forEach(c=>{
   const gens=[]; ['dej','diner'].forEach(sv=>{ if(c[sv]!==null) gens.push(()=>mcq(EN?`At ${sv==='dej'?'LUNCH':'DINNER'}, how much is: ${cfN(c)}?`:`${sv==='dej'?'Au DÉJEUNER':'Au DÎNER'}, combien coûte : ${c.n} ?`, eur(c[sv]), ['5 €','6 €','7 €','8 €','9 €'], T('Attention : les prix des cafés diffèrent entre la carte du déjeuner et celle du dîner.','Careful: coffee prices differ between the lunch and dinner menus.'))); });
-  add('cafe', cfN(c), `${T('Déjeuner','Lunch')} : ${eur(c.dej)} · ${T('Dîner','Dinner')} : ${c.diner===null?'—':eur(c.diner)}<br><small>${coffeeNote}</small>`, gens, {info: infoCoffee(c)});
+  add('cafe', cfN(c), `${T('Déjeuner','Lunch')} : ${eur(c.dej)} · ${T('Dîner','Dinner')} : ${c.diner===null?'—':eur(c.diner)}<br><small>${coffeeNote}</small>`, gens, {info: infoCoffee(c), ikey: c.n==='Thé / infusion'?'t:_tisane':'f:_coffee'});
 });
 const tE = t => (LE.teas||{})[t.n] || [t.n, t.i];
 const tI = t => EN ? tE(t)[1] : t.i;
 L.teas.forEach(t=> add('cafe', t.n, (EN?'<i>'+esc(tE(t)[0])+'</i><br>':'')+tI(t)+' · 8 €', [
   ()=>mcq(T(`Quelle infusion contient : ${t.i} ?`,`Which tea contains: ${tI(t)}?`), t.n, L.teas.map(x=>x.n), 'Maison Père Blaize — 8 €'),
   ()=>mcq(T(`Que contient « ${t.n} » ?`,`What is in "${t.n}"?`), tI(t), L.teas.map(tI), '')
-], {info: infoTea(t)}));
+], {info: infoTea(t), ikey: firstKey('t:'+t.n,'t:_tisane')}));
 
 // Wines
 const WN = L.wines;
@@ -190,7 +203,7 @@ WN.forEach(w=>{
     ()=>mcq(T(`Couleur de ${w.a}, ${w.w} ${w.v} ?`,`Colour of ${w.a}, ${w.w} ${w.v}?`), W(w.c), ['Blanc','Rosé','Rouge'].map(W), ''),
     ()=>{ const bad = WN.filter(x=>!(x.a===w.a)).map(x=>x.w).filter(n=>!WN.some(y=>y.a===w.a && y.w===n)); return mcq(T(`Quel domaine/maison propose le ${w.a} ${w.c.toLowerCase()} ${w.v} (${w.f}) ?`,`Which producer makes the ${W(w.c).toLowerCase()} ${w.a} ${w.v} (${W(w.f)})?`), w.w, bad, ''); }
   ];
-  add('vins', `${w.a}<br><small>${W(w.c)} · ${W(w.f)}</small>`, `${w.w} ${w.v}<br>${W(w.r)} · ${wprice(w)}`, gens, {info: infoWine(w)});
+  add('vins', `${w.a}<br><small>${W(w.c)} · ${W(w.f)}</small>`, `${w.w} ${w.v}<br>${W(w.r)} · ${wprice(w)}`, gens, {info: infoWine(w), ikey: firstKey(`w:${w.w}|${w.c}@${w.a}`,`w:${w.w}|${w.c}`), phdef: PHDEF[w.c]});
 });
 
 // Champagnes
@@ -198,7 +211,7 @@ const C = L.champagnes;
 C.forEach(c=> add('champ', `${c.n}<br><small>${W(c.t)}</small>`, eur(c.p), [
   ()=>mcq(T(`Prix de ${c.n} — ${c.t} ?`,`Price of ${c.n} — ${W(c.t)}?`), eur(c.p), C.map(x=>eur(x.p)), ''),
   ()=>mcq(T(`Dans quelle catégorie est ${c.n} à ${eur(c.p)} ?`,`Which category is ${c.n} at ${eur(c.p)}?`), W(c.t), uniq(C.map(x=>W(x.t))), '')
-], {info: infoChamp(c)}));
+], {info: infoChamp(c), ikey:'c:'+c.n}));
 
 // Digestifs
 const D = L.digestifs;
@@ -207,7 +220,7 @@ D.forEach(d=> add('dig', d.n, `${W(d.h)} · ${d.cl} cl · ${eur(d.p)}${d.d?'<br>
   ()=>mcq(T(`Qui produit « ${d.n} » ?`,`Who makes "${d.n}"?`), W(d.h), uniq(D.map(x=>W(x.h))), ''),
   ()=>mcq(T(`Prix de « ${d.n} » (${d.cl} cl) ?`,`Price of "${d.n}" (${d.cl} cl)?`), eur(d.p), D.map(x=>eur(x.p)).concat(['11 €','20 €']), ''),
   ()=>mcq(T(`Quelle dose sert-on pour « ${d.n} » ?`,`What measure do we pour for "${d.n}"?`), d.cl+' cl', ['2 cl','4 cl','7 cl','10 cl'], T('Ferroni et digestifs classiques : 4 cl · Lachanenche et Liquoristerie de Provence : 7 cl.','Ferroni and classic digestifs: 4 cl · Lachanenche and Liquoristerie de Provence: 7 cl.'))
-], {info: infoDig(d)}));
+], {info: infoDig(d), ikey:'g:'+d.n, phdef:'img/_ph-soft.jpg'}));
 
 // Pairing
 const PW = L.pairing.flatMap(p=>p.wines.map(w=>Object.assign({course:p.course},w)));
@@ -218,7 +231,7 @@ PW.forEach(w=> add('acc', w.n, `<b>${W(w.course)}</b><br>${pG(w)}<br><i>${pT(w)}
   ()=>mcq(T(`Cépages / composition de « ${w.n} » ?`,`Grapes / make-up of "${w.n}"?`), pG(w), PW.map(pG), pT(w)),
   ()=>{ const others = PW.filter(x=>x.course!==w.course).map(x=>x.n); return mcq(EN?`Which wine can go with the ${W(w.course).toLowerCase()} of the Tasting Menu?`:`Quel vin peut accompagner le ${w.course.toLowerCase()} du Menu Dégustation ?`, w.n, others, pT(w)); },
   ()=>mcq(T(`Comment décrire « ${w.n} » au client ?`,`How do you describe "${w.n}" to the guest?`), pT(w), PW.map(pT), '')
-], {info: infoPair(w)}));
+], {info: infoPair(w), ikey: PAIRKEY[w.n]||('p:'+w.n)}));
 
 // Tables
 L.tables.forEach(t=> add('plan', t.id, `${t.sh==='round'?T('Table ronde','Round table'):t.sh==='long'?T('Grande table','Long table'):T('Table carrée','Square table')}${t.cap?' · '+t.cap:''}`, [()=>({plan:true, table:t})]));
@@ -239,12 +252,20 @@ function record(it, ok, xp){ const m = S.m[it.id] || {s:0,c:0,w:0}; if(ok){m.s++
 const ib = it => it && it.info ? `<button class="ib" onclick="event.stopPropagation();LTFinfo('${it.id}')" aria-label="info">ⓘ</button>` : '';
 window.LTFinfo = id => { const it = items.find(i=>i.id===id); if(!it||!it.info) return; const old=$('#imodal'); if(old) old.remove();
   const d = document.createElement('div'); d.id='imodal'; d.className='imodal';
-  d.innerHTML = `<div class="ibox"><button class="ghost iclose" onclick="document.getElementById('imodal').remove()">✕</button><h2>${it.front}</h2>${it.info}</div>`;
-  d.onclick = e => { if(e.target===d) d.remove(); }; document.body.appendChild(d); };
+  const ph = photoOf(it), mine = !!PH[it.ikey];
+  d.innerHTML = `<div class="ibox"><button class="ghost iclose" onclick="document.getElementById('imodal').remove()">✕</button><h2>${it.front}</h2>
+  ${it.ikey?`<div class="iphoto">${ph?`<img src="${ph}" alt="">`:''}<div class="iptag">${mine?T('📷 Votre photo','📷 Your photo'):T('Photo d\'illustration (internet)','Sample photo (from the web)')}</div>
+  <div class="ipbtn"><label class="chip">📷 ${mine?T('Changer la photo','Change photo'):T('Prendre ma photo','Take my photo')}<input type="file" accept="image/*" capture="environment" id="phin" hidden></label>${mine?`<button class="chip" id="phrst">↺ ${T('Photo par défaut','Default photo')}</button>`:''}</div></div>`:''}
+  ${it.info}</div>`;
+  d.onclick = e => { if(e.target===d) d.remove(); }; document.body.appendChild(d);
+  const inp = d.querySelector('#phin'); if(inp) inp.onchange = async () => { const f = inp.files && inp.files[0]; if(!f) return; try{ const url = await shrink(f); PH[it.ikey]=url; await idbPut(it.ikey,url); toast(T('Photo enregistrée ✅','Photo saved ✅')); LTFinfo(id); refresh(); }catch(e){ toast(T('Photo impossible à lire','Could not read photo')); } };
+  const rs = d.querySelector('#phrst'); if(rs) rs.onclick = async () => { delete PH[it.ikey]; await idbPut(it.ikey,null); LTFinfo(id); refresh(); }; };
+let lastView = ['hub'];
+function refresh(){ const v=lastView; if(v[0]==='carte') { const q=$('#srch'); const val=q?q.value:''; carte(); if($('#srch')){ $('#srch').value=val; $('#srch').oninput(); } } }
 
 // ---------- UI ----------
 function header(title, back){ return `<div class="top"><button class="ghost" onclick="LTFgo('${back||'hub'}')">‹</button><div class="ttl">${title}</div><div class="xp">${S.xp} XP</div></div>`; }
-const go = window.LTFgo = (where, arg) => { clearInterval(timer); const m=$('#imodal'); if(m) m.remove(); ({hub, chapter, study, quiz:()=>quiz(arg,10), chrono, exam, review, carte, settings, bar, planFind, cert}[where] || hub)(arg); window.scrollTo(0,0); };
+const go = window.LTFgo = (where, arg) => { clearInterval(timer); lastView=[where,arg]; const m=$('#imodal'); if(m) m.remove(); ({hub, chapter, study, quiz:()=>quiz(arg,10), chrono, exam, review, carte, settings, bar, planFind, cert}[where] || hub)(arg); window.scrollTo(0,0); };
 let curCh = null, timer = null;
 const langBtn = () => `<button class="ghost lang" onclick="LTFlang('${EN?'fr':'en'}')">${EN?'🇫🇷 FR':'🇬🇧 EN'}</button>`;
 
@@ -273,7 +294,7 @@ function chapter(id){ curCh = id || curCh; const c = CH.find(x=>x.id===curCh); c
 function study(){ const pool = shuffle(items.filter(i=>i.ch===curCh)); let k=0;
   const show = () => { if(k>=pool.length){ toast(T('Paquet terminé ! 🎉','Deck done! 🎉')); return go('chapter'); } const it = pool[k];
     app.innerHTML = header(T('Étudier','Study'), 'chapter') + `<div class="prog">${k+1} / ${pool.length}</div>
-    <div class="flip" onclick="this.classList.toggle('on')"><div class="face front">${it.ch==='plan'?planSVG({hl:it.front, labels:false}):it.front}<small class="hint">${T('Touchez pour retourner','Tap to flip')}</small></div><div class="face back">${it.ch==='plan'?'<b>'+it.front+'</b><br>'+it.back:it.back}${it.info?`<button class="ib ibk" onclick="event.stopPropagation();LTFinfo('${it.id}')">ⓘ ${T('Infos client','Guest info')}</button>`:''}</div></div>
+    <div class="flip" onclick="this.classList.toggle('on')"><div class="face front">${it.ch==='plan'?planSVG({hl:it.front, labels:false}):it.front}<small class="hint">${T('Touchez pour retourner','Tap to flip')}</small></div><div class="face back">${photoOf(it)?`<img class="bimg" src="${photoOf(it)}" alt="">`:''}${it.ch==='plan'?'<b>'+it.front+'</b><br>'+it.back:it.back}${it.info?`<button class="ib ibk" onclick="event.stopPropagation();LTFinfo('${it.id}')">ⓘ ${T('Infos client','Guest info')}</button>`:''}</div></div>
     <div class="row2"><button class="bad" id="no">${T('À revoir','Review again')}</button><button class="good" id="yes">${T('Je savais','I knew it')}</button></div>`;
     $('#yes').onclick=()=>{record(it,true,2);k++;show();}; $('#no').onclick=()=>{record(it,false);k++;show();}; };
   show(); }
@@ -339,10 +360,10 @@ function planFind(){ let k=0, score=0; const order = shuffle(L.tables).slice(0,1
 
 // Carte
 function carte(){ app.innerHTML = header(T('La Carte','The Menu')) + `<input id="srch" class="srch" placeholder="${T('Rechercher un plat, un vin, un cocktail…','Search a dish, a wine, a cocktail…')}"><div id="list"></div>`;
-  const render = () => { const f = norm($('#srch').value); $('#list').innerHTML = CH.map(c=>{ const its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+i.back.replace(/<[^>]+>/g,' ')+' '+(i.info||'').replace(/<[^>]+>/g,' ')).includes(f)); if(!its.length) return ''; return `<h3>${c.icon} ${c.name}</h3>`+its.map(i=>`<div class="li"><div class="lirow"><b>${i.front}</b>${ib(i)}</div><div>${i.back}</div></div>`).join(''); }).join('') + `<h3>📌 ${T('À retenir','Key facts')}</h3>`+FACTS.map(x=>`<div class="li">${esc(x)}</div>`).join(''); };
+  const render = () => { const f = norm($('#srch').value); $('#list').innerHTML = CH.map(c=>{ const its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+i.back.replace(/<[^>]+>/g,' ')+' '+(i.info||'').replace(/<[^>]+>/g,' ')).includes(f)); if(!its.length) return ''; return `<h3>${c.icon} ${c.name}</h3>`+its.map(i=>{ const ph=photoOf(i); return `<div class="li"><div class="lirow">${ph?`<img class="th" src="${ph}" loading="lazy" alt="" onclick="LTFinfo('${i.id}')">`:''}<div class="lit"><b>${i.front}</b><div>${i.back}</div></div>${ib(i)}</div></div>`; }).join(''); }).join('') + `<h3>📌 ${T('À retenir','Key facts')}</h3>`+FACTS.map(x=>`<div class="li">${esc(x)}</div>`).join(''); };
   $('#srch').oninput = render; render(); }
 
-function settings(){ app.innerHTML = header(T('Réglages','Settings')) + `<div class="card"><div class="sw">🌐 ${T('Langue','Language')} : <button class="chip ${EN?'':'on'}" onclick="LTFlang('fr')">Français</button><button class="chip ${EN?'on':''}" onclick="LTFlang('en')">English</button></div></div><div class="card"><label class="sw"><input type="checkbox" id="snd" ${S.sound?'checked':''}> ${T('Effets sonores','Sound effects')}</label></div><div class="card"><p>${T('Contenu transcrit des cartes réelles du restaurant (octobre 2026). La formule de la semaine change chaque semaine.','Content transcribed from the restaurant\'s real menus (October 2026). The weekly formula changes every week.')}</p><p>${T('Les fiches ⓘ donnent un texte court à dire au client (en français ; passez en English pour la version anglaise).','The ⓘ notes give a short line to tell the guest (switch to Français for the French version).')}</p><p class="warn">${ALLERGY}</p></div><button class="big bad" id="rst">${T('Réinitialiser la progression','Reset progress')}</button>`;
+function settings(){ app.innerHTML = header(T('Réglages','Settings')) + `<div class="card"><div class="sw">🌐 ${T('Langue','Language')} : <button class="chip ${EN?'':'on'}" onclick="LTFlang('fr')">Français</button><button class="chip ${EN?'on':''}" onclick="LTFlang('en')">English</button></div></div><div class="card"><label class="sw"><input type="checkbox" id="snd" ${S.sound?'checked':''}> ${T('Effets sonores','Sound effects')}</label></div><div class="card"><p>${T('Contenu transcrit des cartes réelles du restaurant (octobre 2026). La formule de la semaine change chaque semaine.','Content transcribed from the restaurant\'s real menus (October 2026). The weekly formula changes every week.')}</p><p>${T('Les fiches ⓘ donnent un texte court à dire au client (en français ; passez en English pour la version anglaise).','The ⓘ notes give a short line to tell the guest (switch to Français for the French version).')}</p><p>${T('📷 Photos : touchez ⓘ puis « Prendre ma photo » pour remplacer la photo d\'illustration par la vraie. Vos photos restent sur ce téléphone.','📷 Photos: tap ⓘ then "Take my photo" to replace the sample picture with the real one. Your photos stay on this phone.')}</p><p class="warn">${ALLERGY}</p></div><button class="big bad" id="rst">${T('Réinitialiser la progression','Reset progress')}</button>`;
   $('#snd').onchange=e=>{S.sound=e.target.checked;save();}; $('#rst').onclick=()=>{ if(confirm(T('Effacer toute la progression ?','Erase all progress?'))){ S={xp:0,m:{},best:{},review:[],streak:1,last:S.last,sound:S.sound,exam:null,lang:S.lang}; save(); go('hub'); } }; }
 
 // FX
@@ -353,4 +374,5 @@ function confetti(){ const cv=document.createElement('canvas'); cv.className='co
 // self-test
 window.LTFtest = () => { let bad=0; items.forEach(it=>it.gens.forEach(g=>{ const q=g(); if(!q){return;} if(q.plan) return; if(!q.options.includes(q.answer)||new Set(q.options).size!==q.options.length) {bad++; console.warn('bad',it.id,q);} })); const noInfo = items.filter(i=>!i.fact&&i.ch!=='plan'&&(!i.info||!/💬/.test(i.info)||/💬[^<]*<\/div><div><\/div>/.test(i.info))).map(i=>i.id); return {items:items.length, bad, noInfo}; };
 hub();
+idbOpen().then(idbAll).then(()=>{ if(Object.keys(PH).length && lastView[0]==='carte') refresh(); });
 })();
