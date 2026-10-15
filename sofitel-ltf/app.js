@@ -128,6 +128,13 @@ function shrink(file){ return new Promise((res,rej)=>{ const fr=new FileReader()
 
 // ---------- build: dishes ----------
 const dishes = L.dishes;
+const COURSE = {'Pour commencer':'app','Entrée':'start','Entrées':'start','Plat':'main','De la mer':'main','De la terre':'main','Fromages':'cheese','Dessert':'dess','Desserts':'dess'};
+const CORDER = ['app','start','main','cheese','dess'];
+const CLAB = {app:['Pour commencer','Appetizer'], start:['Entrée','Starter'], main:['Plat principal','Main course'], cheese:['Fromage','Cheese'], dess:['Dessert','Dessert']};
+const cLab = k => EN ? CLAB[k][1] : CLAB[k][0];
+const cBoth = k => EN ? CLAB[k][1]+' · '+CLAB[k][0] : CLAB[k][0]+' · '+CLAB[k][1];
+const cSub = d => d.s==='De la mer'?T('poisson','fish'):d.s==='De la terre'?T('viande','meat'):'';
+window.LTFcourseOf = it => it.course;
 const sections = uniq(dishes.map(d=>d.s));
 const SVC = {f:T('Formule de la semaine (49 €)','Weekly formula (49 €)'), b:T('Déjeuner et dîner','Lunch and dinner'), d:T('Dîner uniquement','Dinner only'), l:T('Déjeuner uniquement','Lunch only')};
 const svcLabel = d => d.svc.includes('formule') ? SVC.f : (d.svc.includes('dej') && d.svc.includes('diner')) ? SVC.b : d.svc.includes('diner') ? SVC.d : SVC.l;
@@ -145,6 +152,7 @@ dishes.forEach(d=>{
     if(d.d) gens.push(()=>mcq(T(`Comment est accompagné(e) « ${d.n} » ?`,`What comes with "${d.n}"?`), d.d, dishes.filter(x=>x.d).map(x=>x.d), dEn(d)));
     gens.push(()=>mcq(T(`Dans quelle section de la carte se trouve « ${d.n} » ?`,`Which section of the menu is "${d.n}" in?`), W(d.s), (d.svc.includes('formule')?['Entrée','Plat','Dessert']:sections.filter(s=>!['Entrée','Plat','Dessert'].includes(s))).map(W), ''));
     if(dEn(d)) gens.push(()=>mcq(T(`Comment présenter « ${d.n} » à un client anglophone ?`,`How do you describe "${d.n}" to an English-speaking guest?`), dEn(d), dishes.map(dEn).filter(Boolean), ''));
+    if(COURSE[d.s]) gens.push(()=>mcq(T(`« ${d.n} » : c'est quoi ?`,`"${d.n}": what kind of course is it?`), cBoth(COURSE[d.s]), CORDER.map(cBoth), T('Pour commencer = petites choses à partager en attendant ; Entrée = premier plat (≠ « entrée » américaine, qui veut dire plat principal !) ; Plat = plat principal.','Appetizer = small bites to share first; Starter (French "entrée") = first course (careful: in American English "entrée" means main course!); Main course = the "plat".')));
     gens.push(()=>mcq(T(`Quand « ${d.n} » est-il à la carte ?`,`When is "${d.n}" on the menu?`), svcLabel(d), [SVC.f,SVC.b,SVC.d,SVC.l], ''));
     if(/noisette|jambon|cochon|thon|calamars|loup|Saint-Pierre|maigre|pêche suivant/i.test(d.n+' '+d.d)) gens.push(()=>{
       const A = [T('Fruits à coque (noisette)','Nuts (hazelnut)'), T('Porc','Pork'), T('Poisson / produits de la mer','Fish / seafood'), T('Rien de tout cela','None of these')];
@@ -152,7 +160,7 @@ dishes.forEach(d=>{
       return mcq(T(`D'après la carte, que contient « ${d.n} » ?`,`According to the menu, what does "${d.n}" contain?`), t, A, ALLERGY);
     });
     const desc = EN ? (dEn(d)?esc(dEn(d))+'<br><small>'+esc(d.d)+'</small><br>':'') : `${d.d?d.d+'<br>':''}${d.en?'<i>'+esc(d.en)+'</i><br>':''}`;
-    add(c, d.n + (EN&&dEn(d)?'':'' ), `${desc}<b>${W(d.s)}</b> · ${svcLabel(d)}${d.p!==null?' · '+dishPrice(d):''}${d.p2?' / '+eur(d.p2)+' '+p2lab(d):''}`, gens, {info: infoDish(d), ikey:'d:'+d.n});
+    add(c, d.n + (EN&&dEn(d)?'':'' ), `${COURSE[d.s]?`<span class="cb cb-${COURSE[d.s]}">${cLab(COURSE[d.s])}${cSub(d)?' · '+cSub(d):''}</span> `:''}${desc}<b>${W(d.s)}</b> · ${svcLabel(d)}${d.p!==null?' · '+dishPrice(d):''}${d.p2?' / '+eur(d.p2)+' '+p2lab(d):''}`, gens, {info: infoDish(d), ikey:'d:'+d.n, course: COURSE[d.s], csub: cSub(d), as2: d.p2?p2lab(d):''});
   });
 });
 
@@ -520,15 +528,25 @@ function planFind(){ let k=0, score=0; const order = shuffle(L.tables).slice(0,1
   show(); }
 
 // Carte
-let carteCat = 'all';
+let carteCat = 'all', carteCourse = 'all';
+window.LTFcourse = c => { carteCourse = c; const v=$('#srch')?$('#srch').value:''; carte(); $('#srch').value=v; $('#srch').oninput(); };
 window.LTFcat = c => { carteCat = c; const v=$('#srch')?$('#srch').value:''; carte(); $('#srch').value=v; $('#srch').oninput(); };
+
+window.LTFcourseHelp = () => sheet(`<div class="stitle">${T('Pour commencer, entrée ou plat ?','Appetizer, starter or main?')}</div>
+ <div class="cexp"><span class="cb cb-app">${cBoth('app')}</span><p>${T('Petites choses à partager en début de repas, en attendant l\'entrée (ex. tapenade, charcuterie, beignets). Ce n\'est pas un plat complet.','Small bites to share at the very start, while waiting for the starter (e.g. dips, cured meats, fritters). Not a full course.')}</p></div>
+ <div class="cexp"><span class="cb cb-start">${cBoth('start')}</span><p>${T('Le premier vrai plat, une portion légère avant le plat principal. Attention : un client américain dit « entrée » pour le plat principal !','The first real course, a light plate before the main. Careful: American guests say "entrée" for the main course!')}</p></div>
+ <div class="cexp"><span class="cb cb-main">${cBoth('main')}</span><p>${T('Le plat principal, la plus grosse portion. À la carte : « De la mer » = poisson, « De la terre » = viande. Au déjeuner, « Plat » de la formule.','The main course, the biggest plate. On the menu: "De la mer" = fish, "De la terre" = meat. At lunch, the formula\'s "Plat".')}</p></div>
+ <div class="cexp"><span class="cb cb-cheese">${cBoth('cheese')}</span><p>${T('Après le plat, avant ou à la place du dessert.','After the main, before or instead of dessert.')}</p></div>
+ <div class="cexp"><span class="cb cb-dess">${cBoth('dess')}</span><p>${T('La fin du repas.','The end of the meal.')}</p></div>
+ <p class="muted">${T('Ordre du service : Pour commencer → Entrée → Plat → Fromage → Dessert.','Service order: Appetizer → Starter → Main → Cheese → Dessert.')}</p>`, {bar:`<button class="btn grow" onclick="LTFcloseSheet()">${T('Compris','Got it')}</button>`});
 function carte(){ const cats = [['all',T('Tout','All')]].concat(CH.filter(c=>c.id!=='plan').map(c=>[c.id,c.name])).concat([['facts',T('À retenir','Key facts')]]);
   app.innerHTML = appbar(T('La Carte','The Menu'), null, '', true) + `<div class="sticky"><label class="srch">${ic('search',18)}<input id="srch" placeholder="${T('Plat, vin, cocktail…','Dish, wine, cocktail…')}" autocomplete="off"></label>
-  <div class="chips scroll">${cats.map(([v,l])=>`<button class="chip ${carteCat===v?'on':''}" onclick="LTFcat('${v}')">${l}</button>`).join('')}</div></div><div class="pad" id="list"></div>`;
+  <div class="chips scroll">${cats.map(([v,l])=>`<button class="chip ${carteCat===v?'on':''}" onclick="LTFcat('${v}')">${l}</button>`).join('')}</div>
+  ${['all','dej','diner','dess'].includes(carteCat)?`<div class="chips scroll crs">${[['all',T('Tous les plats','All dishes')]].concat(CORDER.map(k=>[k,cLab(k)])).map(([v,l])=>`<button class="chip ${v!=='all'?'cc cb-'+v:''} ${carteCourse===v?'on':''}" onclick="LTFcourse('${v}')">${l}</button>`).join('')}<button class="chip" onclick="LTFcourseHelp()">${ic('info',16)} ${T('Différence ?','Difference?')}</button></div>`:''}</div><div class="pad" id="list"></div>`;
   const render = () => { const f = norm($('#srch').value);
-    const blocks = CH.filter(c=>c.id!=='plan' && (carteCat==='all'||carteCat===c.id)).map(c=>{ const its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+strip(i.back)+' '+strip(i.info)).includes(f)); if(!its.length) return '';
-      return `<div class="sh">${c.name}</div>`+its.map(i=>{ const ph=photoOf(i); return `<div class="li menu" ${i.info?`onclick="LTFinfo('${i.id}')"`:''}>${ph?`<img class="thumb zoomable" src="${ph}" loading="lazy" alt="" onclick="LTFzoom('${i.id}',event)">`:`<div class="av">${ic(CHIC[c.id]||'star',20)}</div>`}<div class="tx"><div class="n">${i.front}</div><div class="muted sm clamp">${esc(strip(i.back))}</div></div>${sayBtn(i)}${i.info?`<span class="rt">${ic('chev',18)}</span>`:''}</div>`; }).join(''); }).join('');
-    const facts = (carteCat==='all'||carteCat==='facts') ? FACTS.filter(x=>norm(x).includes(f)) : [];
+    const blocks = CH.filter(c=>c.id!=='plan' && (carteCat==='all'||carteCat===c.id)).map(c=>{ let its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+strip(i.back)+' '+strip(i.info)).includes(f)); if(carteCourse!=='all') its = its.filter(i=>i.course===carteCourse); if(its.some(i=>i.course)) its = its.slice().sort((a,b)=>CORDER.indexOf(a.course)-CORDER.indexOf(b.course)); if(!its.length) return ''; let lastC=null;
+      return `<div class="sh">${c.name}</div>`+its.map(i=>{ const hd = i.course && i.course!==lastC ? `<div class="csh cb-${i.course}"><span class="dot"></span>${cBoth(i.course)}</div>` : ''; lastC = i.course||lastC; const ph=photoOf(i); return hd+`<div class="li menu" ${i.info?`onclick="LTFinfo('${i.id}')"`:''}>${ph?`<img class="thumb zoomable" src="${ph}" loading="lazy" alt="" onclick="LTFzoom('${i.id}',event)">`:`<div class="av">${ic(CHIC[c.id]||'star',20)}</div>`}<div class="tx">${i.course?`<span class="cb cb-${i.course}">${cLab(i.course)}${i.csub?' · '+i.csub:''}</span>`:''}<div class="n">${i.front}</div><div class="muted sm clamp">${esc(strip(i.back).replace(/^(Pour commencer|Entrée|Plat principal|Fromage|Dessert|Appetizer|Starter|Main course|Cheese)( · (poisson|viande|fish|meat))? /,''))}</div></div>${sayBtn(i)}${i.info?`<span class="rt">${ic('chev',18)}</span>`:''}</div>`; }).join(''); }).join('');
+    const facts = ((carteCat==='all'&&carteCourse==='all')||carteCat==='facts') ? FACTS.filter(x=>norm(x).includes(f)) : [];
     $('#list').innerHTML = (blocks + (facts.length?`<div class="sh">${T('À retenir','Key facts')}</div><div class="card">`+facts.map(x=>`<p class="fact">${esc(x)}</p>`).join('')+'</div>':'')) || `<div class="empty muted">${T('Aucun résultat','No results')}</div>`; };
   $('#srch').oninput = render; render(); }
 
