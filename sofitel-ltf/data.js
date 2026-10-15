@@ -26,11 +26,23 @@ dishes: [
  {n:"Éclipse de pavlova", d:"ganache montée vanille, confit de fruits rouges", en:"Pavlova eclipse, whipped vanilla ganache, red berry confit", s:"Desserts", svc:["dej","diner"], p:14},
  {n:"Chouquette glacée", d:"noisette, vanille", en:"Iced chouquette, hazelnut, vanilla", s:"Desserts", svc:["dej","diner"], p:14},
  {n:"Agrumes", d:"dattes, granité eau de rose, fleur d'oranger", en:"Citrus fruits, dates, rosewater granita, orange blossom", s:"Desserts", svc:["dej","diner"], p:16},
- {n:"Soufflé au chocolat Ariaga", d:"grué de cacao, glace confiture de lait et fleur de sel", en:"Ariaga chocolate soufflé, cocoa nibs, dulce de leche ice cream, fleur de sel", s:"Desserts", svc:["diner"], p:18}
+ {n:"Soufflé au chocolat Ariaga", d:"grué de cacao, glace confiture de lait et fleur de sel", en:"Ariaga chocolate soufflé, cocoa nibs, dulce de leche ice cream, fleur de sel", s:"Desserts", svc:["diner"], p:18},
+ // service "deg": Menu Dégustation du jour (fiche du 15 oct. 2026 — change souvent). "hiver": carte d'hiver, lancement 19 oct. 2026.
+ {n:"Amuse-bouche du jour", d:"meringue à l'aneth, œufs de hareng, mascarpone fumé", en:"Dill meringue, herring roe, smoked mascarpone", s:"Amuse-bouche", svc:["deg"], p:null},
+ {n:"Ravioles de Saint-Jacques", d:"foie gras, truffes, émulsion soja", en:"Scallop ravioli, foie gras, truffle, soy emulsion", s:"Entrée dégustation", svc:["deg"], p:null},
+ {n:"Filet de loup, clémentine", d:"butternut en pickles, gel à l'orange sanguine, tapioca, mousseline de butternut, sauce pil pil", en:"Sea bass fillet, clementine, pickled butternut squash, blood orange gel, tapioca, butternut mousseline, pil pil sauce", s:"Poisson", svc:["deg"], p:null},
+ {n:"Carré d'agneau", d:"gnocchis de pomme de terre, choux de Bruxelles brûlés, girolles, sauce poulette", en:"Rack of lamb, potato gnocchi, charred Brussels sprouts, chanterelles, poulette sauce", s:"Viande", svc:["deg"], p:null},
+ {n:"Sablé breton, poire pochée", d:"crémeux fève tonka, caramel", en:"Breton shortbread, poached pear, tonka bean cream, caramel", s:"Dessert dégustation", svc:["deg"], p:null},
+ {n:"Poire / marrons, comme un mont blanc", d:"moelleux marron, compotée de poire, ganache montée vanille, crème de marron, meringue craquante, sorbet poire — sans gluten", en:"Pear & chestnut, like a Mont Blanc: chestnut sponge, pear compote, whipped vanilla ganache, chestnut cream, crisp meringue, pear sorbet (gluten-free)", s:"Desserts", svc:["hiver"], p:14},
+ {n:"Pommes façon tatin, infusion vanille-anis étoilé", d:"crémeux érable, streusel noix de pécan, noix de pécan sablées, sablé à l'huile d'olive, glace sirop d'érable", en:"Tatin-style apples with vanilla & star anise infusion, maple cream, pecan streusel, sablé pecans, olive oil shortbread, maple syrup ice cream", s:"Desserts", svc:["hiver"], p:14},
+ {n:"Chocolat / sésame noir", d:"pâte sablée cacao, biscuit moelleux chocolat, ganache lait, praliné sésame noir, bavaroise chocolat noir, crème glacée sésame noir", en:"Chocolate & black sesame: cocoa shortcrust, soft chocolate sponge, milk chocolate ganache, black sesame praline, dark chocolate bavarois, black sesame ice cream", s:"Desserts", svc:["hiver"], p:16},
+ {n:"Pignon de pin, romarin, citron", d:"biscuit moelleux pignon de pin, praliné pignon de pin, ganache montée romarin, confit de citron", en:"Pine nut sponge, pine nut praline, whipped rosemary ganache, lemon confit", s:"Desserts", svc:["hiver"], p:16}
 ],
 facts: [
  "Formule déjeuner de la semaine : 49 € (entrée / plat / dessert au choix) — change chaque semaine.",
  "Menu Dégustation « Voyage en Méditerranée » : 89 €, 4 étapes (amuse-bouche, entrée, poisson, viande, dessert).",
+ "Le contenu du Menu Dégustation change souvent : on l'annonce de vive voix d'après la fiche du jour.",
+ "Nouvelle carte d'hiver « 3F » : lancement le 19 octobre 2026.",
  "Accord mets et vins du Menu Dégustation : + 55 €.",
  "Le Menu Dégustation est destiné à l'ensemble de la table.",
  "Menu Dégustation : servi tous les soirs, et au déjeuner uniquement les week-ends et jours fériés.",
