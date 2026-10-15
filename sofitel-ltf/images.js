@@ -1,5 +1,9 @@
 // key -> default photo (downloaded from the web, see img_src/map.tsv for sources)
 window.LTF_IMG = {
+"d:Poire / marrons, comme un mont blanc": "img/d-hiver-mont-blanc.jpg",
+"d:Pommes façon tatin, infusion vanille-anis étoilé": "img/d-hiver-tatin.jpg",
+"d:Chocolat / sésame noir": "img/d-hiver-chocolat.jpg",
+"d:Pignon de pin, romarin, citron": "img/d-hiver-pignon.jpg",
 "d:Œuf parfait de la Ferme de Trets": "img/d-oeuf-parfait-de-la-ferme-de-trets.jpg",
 "d:Tataki de bœuf": "img/d-tataki-de-boeuf.jpg",
 "d:Dos de maigre en croûte d'olives": "img/d-dos-de-maigre-en-croute-d-olives.jpg",
