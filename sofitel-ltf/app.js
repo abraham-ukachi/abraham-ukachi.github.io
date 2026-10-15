@@ -53,7 +53,42 @@ const CH = [
 
 // ---------- items ----------
 const items = [];
-function add(ch, front, back, gens, extra){ const it = Object.assign({id: ch+':'+items.filter(i=>i.ch===ch).length, ch, front, back, gens}, extra||{}); items.push(it); return it; }
+
+// ---------- pronunciation (device voices) ----------
+const ORIG = [
+ [/(?<![\wÀ-ÿ])(?:spritz|negroni|bellini|limoncello|amaretto|campari|aperol|prosecco|pellegrino|panna|grappa|espresso|ristretto|macchiato|cappuccino|tiramis|risotto|burrata|carpaccio|stracciatella|parmigiano|disaronno|sambuca|martini|orezza|lavazza|negroni|vermouth|amaro|averna|fernet)(?![\wÀ-ÿ])/i,'it-IT','Italiano'],
+ [/(?<![\wÀ-ÿ])(?:mojito|margarita|tequila|mezcal|sangria|chorizo|jerez|rioja|patron|bacardi|havana)(?![\wÀ-ÿ])/i,'es-ES','Español'],
+ [/(?<![\wÀ-ÿ])(?:gin|fever|schweppes|coca|cola|whisky|whiskey|bourbon|scotch|ginger beer|london|hendrick|tanqueray|johnnie|jameson|glenfiddich|macallan|lagavulin|talisker|earl grey|english|breakfast|darjeeling|assam|sprite|red bull|old fashioned|mule|sour|bloody|cosmopolitan|tea)(?![\wÀ-ÿ])/i,'en-GB','English'],
+ [/(?<![\wÀ-ÿ])(?:sencha|matcha|genmaicha|yuzu|sake|hojicha|gyokuro|nikka|suntory|hibiki|yamazaki)(?![\wÀ-ÿ])/i,'ja-JP','日本語'],
+ [/(?<![\wÀ-ÿ])(?:riesling|gewurz|gewürz|weizen|kirsch|jägermeister|jagermeister|schnaps)(?![\wÀ-ÿ])/i,'de-DE','Deutsch'],
+ [/(?<![\wÀ-ÿ])(?:porto|port|vinho|madeira|caipirinha|cachaça|cachaca)(?![\wÀ-ÿ])/i,'pt-PT','Português'],
+ [/(?<![\wÀ-ÿ])(?:rooibos)(?![\wÀ-ÿ])/i,'af-ZA','Afrikaans'],
+ [/(?<![\wÀ-ÿ])(?:vodka|beluga|grey goose)(?![\wÀ-ÿ])/i,'ru-RU','Русский']
+];
+function nameIt(it){ const raw = String(it.front).split('<br>')[0]; const sN = x=>String(x||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); const fr = sN(raw); if(!fr) return;
+  let en = (LE.dishes||{})[fr] || (LE.words||{})[fr] || '';
+  if(it.ch==='vins'){ const sub = sN((String(it.front).split('<br>')[1]||'')); const col = sub.split('·')[0].trim(); en = fr+(col?', '+(((LE.words||{})[col])||col)+' wine':''); }
+  if(!en) en = fr;
+  const frenchy = /(?<![\wÀ-ÿ])(de|du|des|la|le|les|au|aux|maison|château|noir|supérieur|provence|juillet)(?![\wÀ-ÿ])|[éèêàçùôî]/i.test(fr); const o = frenchy ? null : ORIG.find(([re])=>re.test(fr)); it.say = {fr, en, ol: o?o[1]:null, on: o?o[2]:null}; }
+let VOICES = []; const loadV = () => { try{ VOICES = speechSynthesis.getVoices()||[]; }catch(e){} };
+if(window.speechSynthesis){ loadV(); speechSynthesis.onvoiceschanged = loadV; }
+const QUAL = /google|enhanced|premium|natural|neural|siri/i;
+function voiceFor(lang){ const p = lang.slice(0,2); const vs = VOICES.filter(v=>v.lang && v.lang.replace('_','-').toLowerCase().startsWith(p));
+  const exact = vs.filter(v=>v.lang.replace('_','-').toLowerCase()===lang.toLowerCase());
+  const pool = exact.length?exact:vs; return pool.find(v=>QUAL.test(v.name)) || pool.find(v=>v.localService) || pool[0] || null; }
+function speakSeq(parts){ if(!window.speechSynthesis){ toast(T('Audio non disponible sur cet appareil','Audio not available on this device')); return; }
+  speechSynthesis.cancel(); loadV();
+  parts.forEach(([txt,lang])=>{ const u = new SpeechSynthesisUtterance(txt); u.lang = lang; const v = voiceFor(lang); if(v) u.voice = v; u.rate = 0.88; speechSynthesis.speak(u); }); }
+// tap = original (if not French) + French + English (order follows app language)
+window.LTFsay = (id, which) => { const it = items.find(i=>i.id===id); if(!it||!it.say) return; const s = it.say;
+  const FR=[s.fr,'fr-FR'], ENp=[s.en,'en-GB'], OR = s.ol?[s.fr,s.ol]:null;
+  if(which==='fr') return speakSeq([FR]); if(which==='en') return speakSeq([ENp]); if(which==='or') return speakSeq([OR||FR]);
+  const seq = EN ? [ENp, FR] : [FR, ENp]; if(OR) seq.unshift(OR); speakSeq(seq); };
+window.LTFitems = () => items;
+const sayBtn = it => it && it.say ? `<button class="sayb" onclick="event.stopPropagation();LTFsay('${it.id}')" aria-label="${T('Écouter','Listen')}">${ic('sound',18)}</button>` : '';
+const sayRow = it => !it||!it.say ? '' : `<div class="sayrow">${it.say.ol?`<button class="chip" onclick="LTFsay('${it.id}','or')">${ic('sound',16)} ${it.say.on}</button>`:''}<button class="chip" onclick="LTFsay('${it.id}','fr')">${ic('sound',16)} Français</button><button class="chip" onclick="LTFsay('${it.id}','en')">${ic('sound',16)} English</button></div>`;
+
+function add(ch, front, back, gens, extra){ const it = Object.assign({id: ch+':'+items.filter(i=>i.ch===ch).length, ch, front, back, gens}, extra||{}); if(!it.fact && ch!=='plan') nameIt(it); items.push(it); return it; }
 
 // ---------- ⓘ info builders ----------
 const sec = (ic, title, txt) => txt ? `<div class="isec"><div class="ih">${ic} ${title}</div><div>${txt}</div></div>` : '';
@@ -309,7 +344,7 @@ const ib = it => it && it.info ? `<button class="ib" onclick="event.stopPropagat
 window.LTFinfo = id => { const it = items.find(i=>i.id===id); if(!it||!it.info) return;
   const ph = photoOf(it), mine = !!PH[it.ikey];
   const html = `${it.ikey&&ph?`<div class="hphoto"><img src="${ph}" alt=""><span class="ptag">${mine?T('Votre photo','Your photo'):T('Photo d\'illustration','Sample photo')}</span><button class="pclose" onclick="LTFcloseSheet()">${ic('x',18)}</button></div>`:`<button class="pclose solo" onclick="LTFcloseSheet()">${ic('x',18)}</button>`}
-   <div class="stitle">${it.front}</div><div class="sdesc">${it.back}</div><div class="sinfo">${it.info}</div>`;
+   <div class="stitle tl2"><span>${it.front}</span>${sayBtn(it)}</div>${sayRow(it)}<div class="sdesc">${it.back}</div><div class="sinfo">${it.info}</div>`;
   const bar = it.ikey ? `${mine?`<button class="btn sec sq" id="phrst" aria-label="reset">${ic('reset',20)}</button>`:''}<label class="btn grow">${ic('cam',20)} ${mine?T('Changer la photo','Change photo'):T('Prendre ma photo','Take my photo')}<input type="file" accept="image/*" capture="environment" id="phin" hidden></label>` : '';
   const d = sheet(html, {bar});
   const inp = d.querySelector('#phin'); if(inp) inp.onchange = async () => { const f = inp.files && inp.files[0]; if(!f) return; try{ const url = await shrink(f); PH[it.ikey]=url; await idbPut(it.ikey,url); toast(T('Photo enregistrée','Photo saved')); LTFinfo(id); refresh(); }catch(e){ toast(T('Photo impossible à lire','Could not read photo')); } };
@@ -370,7 +405,7 @@ function chapter(id){ curCh = id || curCh; const c = CH.find(x=>x.id===curCh); c
 function study(){ const pool = shuffle(items.filter(i=>i.ch===curCh)); let k=0;
   const show = () => { if(k>=pool.length){ toast(T('Paquet terminé !','Deck done!')); return go('chapter'); } const it = pool[k]; const ph = photoOf(it);
     app.innerHTML = flowbar(100*k/pool.length, `${k+1}/${pool.length}`) + `<div class="pad">
-    <div class="flip" id="flip"><div class="face front">${it.ch==='plan'?planSVG({hl:it.front, labels:false}):`<div class="fq">${it.front}</div>`}<small class="hint">${T('Touchez pour retourner','Tap to flip')}</small></div><div class="face back">${ph?`<img class="bimg" src="${ph}" alt="">`:''}<div class="btxt">${it.ch==='plan'?'<b>'+it.front+'</b><br>'+it.back:it.back}</div>${it.info?`<button class="chip gold" onclick="event.stopPropagation();LTFinfo('${it.id}')">${ic('info',16)} ${T('Infos client','Guest info')}</button>`:''}</div></div></div>
+    <div class="flip" id="flip"><div class="face front">${it.ch==='plan'?planSVG({hl:it.front, labels:false}):`<div class="fq">${it.front}</div>${sayBtn(it)}`}<small class="hint">${T('Touchez pour retourner','Tap to flip')}</small></div><div class="face back">${ph?`<img class="bimg" src="${ph}" alt="">`:''}<div class="btxt">${it.ch==='plan'?'<b>'+it.front+'</b><br>'+it.back:it.back}</div>${it.info?`<button class="chip gold" onclick="event.stopPropagation();LTFinfo('${it.id}')">${ic('info',16)} ${T('Infos client','Guest info')}</button>`:''}</div></div></div>
     <div class="abar fixed"><button class="btn sec grow" id="no">${T('À revoir','Review again')}</button><button class="btn grow ok" id="yes">${ic('check',20)} ${T('Je savais','I knew it')}</button></div>`;
     bindX('chapter'); $('#flip').onclick=function(){ this.classList.toggle('on'); };
     $('#yes').onclick=()=>{record(it,true,2);k++;show();}; $('#no').onclick=()=>{record(it,false);k++;show();}; };
@@ -469,7 +504,7 @@ function carte(){ const cats = [['all',T('Tout','All')]].concat(CH.filter(c=>c.i
   <div class="chips scroll">${cats.map(([v,l])=>`<button class="chip ${carteCat===v?'on':''}" onclick="LTFcat('${v}')">${l}</button>`).join('')}</div></div><div class="pad" id="list"></div>`;
   const render = () => { const f = norm($('#srch').value);
     const blocks = CH.filter(c=>c.id!=='plan' && (carteCat==='all'||carteCat===c.id)).map(c=>{ const its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+strip(i.back)+' '+strip(i.info)).includes(f)); if(!its.length) return '';
-      return `<div class="sh">${c.name}</div>`+its.map(i=>{ const ph=photoOf(i); return `<div class="li menu" ${i.info?`onclick="LTFinfo('${i.id}')"`:''}>${ph?`<img class="thumb" src="${ph}" loading="lazy" alt="">`:`<div class="av">${ic(CHIC[c.id]||'star',20)}</div>`}<div class="tx"><div class="n">${i.front}</div><div class="muted sm clamp">${esc(strip(i.back))}</div></div>${i.info?`<span class="rt">${ic('chev',18)}</span>`:''}</div>`; }).join(''); }).join('');
+      return `<div class="sh">${c.name}</div>`+its.map(i=>{ const ph=photoOf(i); return `<div class="li menu" ${i.info?`onclick="LTFinfo('${i.id}')"`:''}>${ph?`<img class="thumb" src="${ph}" loading="lazy" alt="">`:`<div class="av">${ic(CHIC[c.id]||'star',20)}</div>`}<div class="tx"><div class="n">${i.front}</div><div class="muted sm clamp">${esc(strip(i.back))}</div></div>${sayBtn(i)}${i.info?`<span class="rt">${ic('chev',18)}</span>`:''}</div>`; }).join(''); }).join('');
     const facts = (carteCat==='all'||carteCat==='facts') ? FACTS.filter(x=>norm(x).includes(f)) : [];
     $('#list').innerHTML = (blocks + (facts.length?`<div class="sh">${T('À retenir','Key facts')}</div><div class="card">`+facts.map(x=>`<p class="fact">${esc(x)}</p>`).join('')+'</div>':'')) || `<div class="empty muted">${T('Aucun résultat','No results')}</div>`; };
   $('#srch').oninput = render; render(); }
