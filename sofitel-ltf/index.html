@@ -164,7 +164,8 @@ body.notabs .toast{bottom:calc(110px + env(safe-area-inset-bottom))}
 .conf{position:fixed;inset:0;pointer-events:none;z-index:70}
 #inst{bottom:calc(92px + env(safe-area-inset-bottom))!important}
 @media (min-width:700px){.sheet{border-radius:28px;margin-bottom:24px}}
-.ib{width:36px;height:36px;border-radius:18px;background:var(--pill);color:var(--gold);display:flex;align-items:center;justify-content:center;flex:none}</style></head><body><div id="app"></div>
+.ib{width:36px;height:36px;border-radius:18px;background:var(--pill);color:var(--gold);display:flex;align-items:center;justify-content:center;flex:none}.sayb{width:40px;height:40px;border-radius:20px;background:var(--pill);color:var(--gold);display:inline-flex;align-items:center;justify-content:center;flex:none}.sayb:active{transform:scale(.92)}.tl2{display:flex;align-items:flex-start;gap:10px;justify-content:space-between}.sayrow{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}.front .sayb{margin-top:16px;width:52px;height:52px;border-radius:26px}
+</style></head><body><div id="app"></div>
 <script src="hero.js"></script><script src="data.js"></script><script src="i18n.js"></script><script src="i18n_fr.js"></script><script src="images.js"></script><script src="app.js"></script>
 <button id="inst" style="display:none;position:fixed;right:14px;bottom:14px;z-index:40;background:#c9a24b;color:#0f1d33;border:0;border-radius:24px;padding:12px 18px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.4)">Installer l'app</button>
 <script>let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;const b=document.getElementById('inst');b.style.display='block';b.onclick=async()=>{b.style.display='none';dp.prompt();dp=null;};});</script>
