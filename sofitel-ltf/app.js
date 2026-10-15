@@ -128,32 +128,33 @@ function shrink(file){ return new Promise((res,rej)=>{ const fr=new FileReader()
 
 // ---------- build: dishes ----------
 const dishes = L.dishes;
-const COURSE = {'Pour commencer':'app','Entrée':'start','Entrées':'start','Plat':'main','De la mer':'main','De la terre':'main','Fromages':'cheese','Dessert':'dess','Desserts':'dess'};
+const COURSE = {'Amuse-bouche':'app','Entrée dégustation':'start','Poisson':'main','Viande':'main','Dessert dégustation':'dess','Pour commencer':'app','Entrée':'start','Entrées':'start','Plat':'main','De la mer':'main','De la terre':'main','Fromages':'cheese','Dessert':'dess','Desserts':'dess'};
 const CORDER = ['app','start','main','cheese','dess'];
 const CLAB = {app:['Pour commencer','Appetizer'], start:['Entrée','Starter'], main:['Plat principal','Main course'], cheese:['Fromage','Cheese'], dess:['Dessert','Dessert']};
 const cLab = k => EN ? CLAB[k][1] : CLAB[k][0];
 const cBoth = k => EN ? CLAB[k][1]+' · '+CLAB[k][0] : CLAB[k][0]+' · '+CLAB[k][1];
-const cSub = d => d.s==='De la mer'?T('poisson','fish'):d.s==='De la terre'?T('viande','meat'):'';
+const cSub = d => d.s==='Poisson'?T('poisson','fish'):d.s==='Viande'?T('viande','meat'):d.s==='De la mer'?T('poisson','fish'):d.s==='De la terre'?T('viande','meat'):'';
 window.LTFcourseOf = it => it.course;
 const sections = uniq(dishes.map(d=>d.s));
-const SVC = {f:T('Formule de la semaine (49 €)','Weekly formula (49 €)'), b:T('Déjeuner et dîner','Lunch and dinner'), d:T('Dîner uniquement','Dinner only'), l:T('Déjeuner uniquement','Lunch only')};
-const svcLabel = d => d.svc.includes('formule') ? SVC.f : (d.svc.includes('dej') && d.svc.includes('diner')) ? SVC.b : d.svc.includes('diner') ? SVC.d : SVC.l;
+const DEGS = ['Amuse-bouche','Entrée dégustation','Poisson','Viande','Dessert dégustation'];
+const SVC = {g:T('Menu Dégustation du jour','Tasting menu of the day'), h:T('Carte d\'hiver (dès le 19 octobre)','Winter menu (from 19 October)'), f:T('Formule de la semaine (49 €)','Weekly formula (49 €)'), b:T('Déjeuner et dîner','Lunch and dinner'), d:T('Dîner uniquement','Dinner only'), l:T('Déjeuner uniquement','Lunch only')};
+const svcLabel = d => d.svc.includes('deg') ? SVC.g : d.svc.includes('hiver') ? SVC.h : d.svc.includes('formule') ? SVC.f : (d.svc.includes('dej') && d.svc.includes('diner')) ? SVC.b : d.svc.includes('diner') ? SVC.d : SVC.l;
 const unitTxt = u => EN ? (u==='les 100 g'?'per 100 g':u) : u;
 const dishPrice = d => d.p===null ? null : eur(d.p) + (d.unit?(' '+unitTxt(d.unit)):'');
 const dEn = d => d.en || (LE.dishes||{})[d.n] || '';
 const dDesc = d => EN ? (dEn(d) || d.d) : d.d;     // what the "accompaniment" means in each language
 const p2lab = d => EN ? 'as a main' : d.p2label;
 dishes.forEach(d=>{
-  const chs = (d.s==='Desserts'||d.s==='Fromages') ? ['dess'] : d.svc.includes('formule') ? ['dej'] : d.svc.includes('dej') ? ['dej','diner'] : ['diner'];
+  const chs = d.svc.includes('deg') ? ['diner'] : (d.s==='Desserts'||d.s==='Fromages') ? ['dess'] : d.svc.includes('formule') ? ['dej'] : d.svc.includes('dej') ? ['dej','diner'] : ['diner'];
   chs.forEach(c=>{
     const gens = [];
     if(d.p!==null) gens.push(()=>mcq(T(`Combien coûte « ${d.n} » ?`,`How much is "${d.n}"?`), dishPrice(d), dishes.filter(x=>x.p!==null).map(dishPrice), `${d.n} : ${dishPrice(d)}${d.p2?` (${eur(d.p2)} ${p2lab(d)})`:''}.`));
     if(d.d) gens.push(()=>mcq(EN?`Which dish is this: "${dDesc(d)}"?`:`Quel plat est servi avec : « ${d.d} » ?`, d.n, dishes.map(x=>x.n), `${d.n} — ${d.d}.`));
     if(d.d) gens.push(()=>mcq(T(`Comment est accompagné(e) « ${d.n} » ?`,`What comes with "${d.n}"?`), d.d, dishes.filter(x=>x.d).map(x=>x.d), dEn(d)));
-    gens.push(()=>mcq(T(`Dans quelle section de la carte se trouve « ${d.n} » ?`,`Which section of the menu is "${d.n}" in?`), W(d.s), (d.svc.includes('formule')?['Entrée','Plat','Dessert']:sections.filter(s=>!['Entrée','Plat','Dessert'].includes(s))).map(W), ''));
+    gens.push(()=>mcq(T(`Dans quelle section de la carte se trouve « ${d.n} » ?`,`Which section of the menu is "${d.n}" in?`), W(d.s), (d.svc.includes('deg')?DEGS:d.svc.includes('formule')?['Entrée','Plat','Dessert']:sections.filter(s=>!['Entrée','Plat','Dessert'].concat(DEGS).includes(s))).map(W), ''));
     if(dEn(d)) gens.push(()=>mcq(T(`Comment présenter « ${d.n} » à un client anglophone ?`,`How do you describe "${d.n}" to an English-speaking guest?`), dEn(d), dishes.map(dEn).filter(Boolean), ''));
     if(COURSE[d.s]) gens.push(()=>mcq(T(`« ${d.n} » : c'est quoi ?`,`"${d.n}": what kind of course is it?`), cBoth(COURSE[d.s]), CORDER.map(cBoth), T('Pour commencer = petites choses à partager en attendant ; Entrée = premier plat (≠ « entrée » américaine, qui veut dire plat principal !) ; Plat = plat principal.','Appetizer = small bites to share first; Starter (French "entrée") = first course (careful: in American English "entrée" means main course!); Main course = the "plat".')));
-    gens.push(()=>mcq(T(`Quand « ${d.n} » est-il à la carte ?`,`When is "${d.n}" on the menu?`), svcLabel(d), [SVC.f,SVC.b,SVC.d,SVC.l], ''));
+    gens.push(()=>mcq(T(`Quand « ${d.n} » est-il à la carte ?`,`When is "${d.n}" on the menu?`), svcLabel(d), (d.svc.includes('deg')||d.svc.includes('hiver')?[SVC.g,SVC.h,SVC.b,SVC.d]:[SVC.f,SVC.b,SVC.d,SVC.l]), ''));
     if(/noisette|jambon|cochon|thon|calamars|loup|Saint-Pierre|maigre|pêche suivant/i.test(d.n+' '+d.d)) gens.push(()=>{
       const A = [T('Fruits à coque (noisette)','Nuts (hazelnut)'), T('Porc','Pork'), T('Poisson / produits de la mer','Fish / seafood'), T('Rien de tout cela','None of these')];
       const t = /noisette/i.test(d.n+d.d)?A[0]:/jambon|cochon/i.test(d.n+d.d)?A[1]:A[2];
