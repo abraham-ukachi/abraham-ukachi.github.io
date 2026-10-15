@@ -4,6 +4,7 @@
 window.LTF_EN = {
 // ---------- words & short phrases ----------
 words: {
+ "Amuse-bouche":"Amuse-bouche","Entrée dégustation":"Tasting starter","Poisson":"Fish","Viande":"Meat","Dessert dégustation":"Tasting dessert",
  "Entrée":"Starter","Plat":"Main course","Dessert":"Dessert","Pour commencer":"To start","Entrées":"Starters","De la mer":"From the sea","De la terre":"From the land","Fromages":"Cheeses","Desserts":"Desserts",
  "Blanc":"White","Rosé":"Rosé","Rouge":"Red",
  "Provence":"Provence","Rhône":"Rhône","Bourgogne":"Burgundy","Loire":"Loire","Bordeaux":"Bordeaux","Corse":"Corsica","Grèce":"Greece","Espagne":"Spain","Sicile (Italie)":"Sicily (Italy)",
@@ -95,7 +96,16 @@ dish: {
  "Entrecôte ribeye (250 g)":{say:"A 250 g French ribeye, with a crispy potato 'paillasson' (grated potato cake), a grilled Marmande tomato and Foyot sauce — a béarnaise enriched with meat glaze. Ask for cooking preference.",words:"Foyot = béarnaise + meat glaze."},
  "Poitrine de veau confite et ris de veau":{say:"Slow-confit veal breast with sweetbreads, aubergine and samphire (a salty sea vegetable), plus a tangy cream spiced with vadouvan, a French curry blend.",words:"Ris de veau = veal sweetbreads (thymus). Vadouvan = curry-style spice mix with shallots."},
  "Fromages affinés de Provence de la Maison Lemarié":{say:"A selection of Provençal cheeses aged by Maison Lemarié, cheese affineurs. Good with a red or a white from Provence.",words:"Affiné = matured by an affineur."},
- "Éclipse de pavlova":{say:"Our pavlova: crisp meringue with whipped vanilla ganache and a red-berry confit. Light and fruity.",words:"Contains egg."},
+ "Amuse-bouche du jour":{say:"A little bite from the chef to open the tasting menu: a dill meringue topped with herring roe and smoked mascarpone. Salty, smoky and airy.",words:"Contains egg, fish (herring roe), dairy."},
+"Ravioles de Saint-Jacques":{say:"Delicate scallop ravioli with foie gras and shaved truffle, finished with a light soy foam.",words:"Contains shellfish (scallop), gluten, soy; foie gras."},
+"Filet de loup, clémentine":{say:"Mediterranean sea bass fillet with clementine, pickled and puréed butternut squash, a blood orange gel, tapioca pearls and a pil pil sauce — the Basque emulsion of olive oil, garlic and chilli.",words:"Contains fish."},
+"Carré d'agneau":{say:"Rack of lamb with potato gnocchi, charred Brussels sprouts and chanterelle mushrooms, in a poulette sauce (a creamy sauce with mushrooms, lemon and egg yolk). The sheet notes beef may replace the lamb — check with the kitchen.",words:"Contains dairy, egg, gluten (gnocchi)."},
+"Sablé breton, poire pochée":{say:"The tasting-menu dessert: a buttery Breton shortbread with poached pear, a tonka bean cream and caramel.",words:"Contains gluten, butter/dairy, egg."},
+"Poire / marrons, comme un mont blanc":{say:"Our take on the Mont Blanc: soft chestnut cake, pear compote, whipped vanilla ganache, chestnut cream and crisp meringue, with a pear sorbet. Gluten-free.",words:"Gluten-free. Contains dairy, egg, chestnut."},
+"Pommes façon tatin, infusion vanille-anis étoilé":{say:"Like a tarte tatin: caramelised apples infused with vanilla and star anise, a maple cream, pecan crumble and candied pecans, on an olive oil shortbread, with maple syrup ice cream.",words:"Contains nuts (pecan), gluten, dairy."},
+"Chocolat / sésame noir":{say:"For chocolate lovers: cocoa shortcrust, soft chocolate sponge, milk chocolate ganache, black sesame praline and a dark chocolate bavarois, with black sesame ice cream.",words:"Contains sesame, dairy, gluten, egg."},
+"Pignon de pin, romarin, citron":{say:"A Provençal dessert: soft pine nut sponge, pine nut praline, whipped rosemary ganache and lemon confit. Fresh and herby.",words:"Contains nuts (pine nuts), dairy, gluten, egg."},
+"Éclipse de pavlova":{say:"Our pavlova: crisp meringue with whipped vanilla ganache and a red-berry confit. Light and fruity.",words:"Contains egg."},
  "Chouquette glacée":{say:"A play on the chouquette, the little choux puff with pearl sugar — here served iced, with hazelnut and vanilla.",words:"Contains nuts (hazelnut)."},
  "Agrumes":{say:"Our freshest dessert: citrus fruits with dates, a rosewater granita and orange blossom. Light, perfumed, not too sweet.",words:""},
  "Soufflé au chocolat Ariaga":{say:"A hot chocolate soufflé made with Ariaga chocolate, with cocoa nibs and dulce de leche ice cream with fleur de sel. Baked to order, so it takes a little time.",words:"Confiture de lait = dulce de leche."}
