@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<link rel="manifest" href="manifest.json"><meta name="theme-color" content="#0f1d33"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Trois Forts"><link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png"><title>Les Trois Forts — Service Academy</title>
+<style>
+:root{--navy:#0f1d33;--navy2:#172a47;--gold:#c9a24b;--gold2:#e8c873;--cream:#f6efe1;--blue:#2f5d8a;--ok:#2e8b57;--ko:#b8433a;--txt:#f6efe1}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(circle at 20% 0%,#1d3557 0,var(--navy) 55%);color:var(--txt);font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;min-height:100vh;transition:background .15s}
+body.okf{box-shadow:inset 0 0 0 6px var(--ok)}body.kof{box-shadow:inset 0 0 0 6px var(--ko)}
+#app{max-width:760px;margin:0 auto;padding:0 14px 40px}
+h1,h2,h3,.ttl,.tn,.score{font-family:Georgia,"Times New Roman",serif}
+h2{font-size:1.2rem;line-height:1.35;margin:.4rem 0}h3{color:var(--gold2);margin:22px 4px 8px;font-weight:normal;font-size:1.15rem}
+small{opacity:.75}
+.hero{height:240px;margin:0 -14px;background-size:cover;background-position:center;position:relative}
+.hero:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,29,51,.15),rgba(15,29,51,.95))}
+.heroin{position:absolute;left:20px;bottom:18px;z-index:1}.hero h1{margin:0;font-size:2.4rem;color:#fff;letter-spacing:.5px}
+.kicker{text-transform:uppercase;letter-spacing:3px;font-size:.7rem;color:var(--gold2)}.sub{color:var(--gold);font-style:italic;font-family:Georgia,serif;font-size:1.1rem}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(201,162,75,.25);border-radius:16px;padding:14px 16px;margin:12px 0}
+.stats{display:flex;justify-content:space-between;align-items:center;gap:10px}.stats>div:first-child{flex:1}
+.bar,.ring{height:8px;background:rgba(255,255,255,.12);border-radius:8px;overflow:hidden;margin:6px 0}.bar i,.ring i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.pills{display:flex;flex-direction:column;gap:6px}.pills span{background:rgba(201,162,75,.18);padding:6px 10px;border-radius:20px;font-size:.9rem;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.tile{background:linear-gradient(160deg,var(--navy2),#0c1729);border:1px solid rgba(201,162,75,.3);border-radius:16px;color:var(--txt);text-align:left;padding:14px;cursor:pointer}
+.tile:active{transform:scale(.98)}.ic{font-size:1.6rem}.tn{font-size:1.05rem;margin:4px 0;color:var(--cream)}.ts{font-size:.78rem;opacity:.7;min-height:2.2em}
+button{font:inherit}
+.big{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:16px;border-radius:14px;border:1px solid var(--gold);background:rgba(201,162,75,.12);color:var(--cream);font-size:1.02rem;cursor:pointer;margin:6px 0}
+.big small{font-size:.75rem;margin-top:3px}.big.good{background:var(--gold);color:var(--navy);font-weight:600}.big.bad{border-color:var(--ko);background:rgba(184,67,58,.15)}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.row3 .big{font-size:.86rem;padding:12px 6px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.modes{display:grid;gap:4px}
+.top{display:flex;align-items:center;gap:10px;padding:14px 0 6px;position:sticky;top:0;background:var(--navy);z-index:5}
+.ttl{flex:1;font-size:1.15rem;color:var(--gold2)}.xp{font-size:.85rem;color:var(--gold)}
+.ghost{background:none;border:1px solid rgba(201,162,75,.4);color:var(--cream);border-radius:10px;padding:6px 12px;font-size:1.1rem;cursor:pointer}
+.prog{opacity:.7;font-size:.85rem;margin:6px 2px}
+.opts{display:grid;gap:8px}.opt{text-align:left;padding:14px;border-radius:12px;border:1px solid rgba(246,239,225,.2);background:rgba(255,255,255,.05);color:var(--cream);cursor:pointer;font-size:.98rem;line-height:1.3}
+.opt.right{background:rgba(46,139,87,.35);border-color:var(--ok)}.opt.wrong{background:rgba(184,67,58,.35);border-color:var(--ko)}
+.fb.okc{border-color:var(--ok)}.fb.koc{border-color:var(--ko)}.next{margin-top:4px}
+.flip{position:relative;height:300px;perspective:1000px;margin:12px 0;cursor:pointer}
+.face{position:absolute;inset:0;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;backface-visibility:hidden;transition:transform .5s;font-size:1.15rem;line-height:1.45;overflow:auto}
+.front{background:linear-gradient(160deg,var(--navy2),#0b1527);border:1px solid var(--gold);font-family:Georgia,serif;font-size:1.35rem}
+.back{background:var(--cream);color:var(--navy);transform:rotateY(180deg)}
+.flip.on .front{transform:rotateY(180deg)}.flip.on .back{transform:rotateY(360deg)}
+.hint{position:absolute;bottom:10px;font-size:.7rem;font-family:sans-serif}
+.good{background:var(--ok);border:0;color:#fff;padding:14px;border-radius:12px;font-size:1rem;cursor:pointer}.bad{background:var(--ko);border:0;color:#fff;padding:14px;border-radius:12px;font-size:1rem;cursor:pointer}
+.center{text-align:center}.score{font-size:3rem;color:var(--gold2)}
+.hud{display:flex;justify-content:space-between;background:rgba(201,162,75,.15);padding:10px 14px;border-radius:12px;margin:8px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{padding:10px 12px;border-radius:20px;border:1px solid rgba(246,239,225,.3);background:rgba(255,255,255,.05);color:var(--cream);cursor:pointer}
+.chip.on{background:var(--gold);color:var(--navy);border-color:var(--gold)}
+.barbg{background:linear-gradient(rgba(15,29,51,.75),rgba(15,29,51,.9)),var(--navy2)}
+.plan{width:100%;height:auto;display:block;margin:8px 0}.room{fill:rgba(255,255,255,.04);stroke:rgba(201,162,75,.5);stroke-width:.4}
+.win{stroke:#6fa8dc;stroke-width:1.2;stroke-dasharray:3 1.5}.wl{fill:#9cc3ea;font-size:2.6px;text-anchor:middle}
+.ctr{fill:#5a4630;stroke:var(--gold);stroke-width:.3}.cl{fill:var(--gold2);font-size:2.4px;text-anchor:middle}
+.tb{fill:#22395c;stroke:var(--cream);stroke-width:.35;cursor:pointer}.tb.hl{fill:var(--gold);stroke:#fff;stroke-width:.6}
+.tl{fill:#fff;font-size:2.4px;text-anchor:middle;pointer-events:none;font-weight:bold}
+.flip .plan{max-height:220px}
+.srch{width:100%;padding:14px;border-radius:12px;border:1px solid var(--gold);background:rgba(255,255,255,.06);color:var(--cream);font-size:1rem;margin:8px 0}
+.li{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08);font-size:.92rem;line-height:1.4}.li b{color:var(--cream)}.li div{opacity:.8}
+.warn{color:#e9b46a}.gold{color:var(--gold2)}
+.cert{text-align:center;padding:30px 20px;margin:16px 0;border:3px double var(--gold);border-radius:12px;background:var(--cream);color:var(--navy)}.cert h1{font-size:2.6rem;margin:10px 0;color:#8a6a22}.cert .score{color:#8a6a22}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--cream);color:var(--navy);padding:10px 16px;border-radius:20px;z-index:20;font-size:.9rem;max-width:90%}
+.conf{position:fixed;inset:0;pointer-events:none;z-index:30}
+.foot{text-align:center;margin-top:18px}.sw{display:flex;gap:10px;align-items:center}
+hr{border:0;border-top:1px solid rgba(255,255,255,.15)}
+</style></head><body><div id="app"></div>
+<script src="hero.js"></script><script src="data.js"></script><script src="app.js"></script>
+<button id="inst" style="display:none;position:fixed;right:14px;bottom:14px;z-index:40;background:#c9a24b;color:#0f1d33;border:0;border-radius:24px;padding:12px 18px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.4)">📲 Installer l'app</button>
+<script>let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;const b=document.getElementById('inst');b.style.display='block';b.onclick=async()=>{b.style.display='none';dp.prompt();dp=null;};});</script>
+<script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));}</script>
+</body></html>
