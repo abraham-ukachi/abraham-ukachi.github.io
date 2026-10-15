@@ -339,11 +339,34 @@ function dialog(html, dismiss){ const old=$('#dlg'); if(old) old.remove(); const
 function confirmDlg(title, text, okLbl, onOk, danger){ const d = dialog(`<div class="dt">${title}</div><p class="muted">${text}</p><div class="dbtns"><button class="btn sec" id="dno">${T('Annuler','Cancel')}</button><button class="btn ${danger?'danger':''}" id="dok">${okLbl}</button></div>`);
   d.querySelector('#dno').onclick=()=>d.remove(); d.querySelector('#dok').onclick=()=>{ d.remove(); onOk(); }; }
 
+
+// ---------- photo viewer (pinch / double-tap zoom, pan) ----------
+window.LTFzoom = (id, ev) => { if(ev) ev.stopPropagation(); const it = items.find(i=>i.id===id); const src = it && photoOf(it); if(!src) return;
+  const d = document.createElement('div'); d.className='ov zoomv'; d.innerHTML = `<div class="zt"><div class="zn">${it.front}</div><button class="zx" aria-label="close">${ic('x',22)}</button></div><div class="zs"><img src="${src}" alt="" draggable="false"></div><div class="zh">${T('Pincez ou touchez deux fois pour zoomer','Pinch or double-tap to zoom')}</div>`;
+  document.body.appendChild(d); const img = d.querySelector('img'), st = d.querySelector('.zs');
+  let sc=1, x=0, y=0, pts=new Map(), start=null, lastTap=0, moved=false;
+  const apply = (anim) => { img.style.transition = anim?'transform .2s':'none'; img.style.transform = `translate(${x}px,${y}px) scale(${sc})`; };
+  const clampP = () => { if(sc<=1){ sc=1; x=0; y=0; return; } const r = st.getBoundingClientRect(); const w=img.offsetWidth*sc, h=img.offsetHeight*sc; const mx=Math.max(0,(w-r.width)/2), my=Math.max(0,(h-r.height)/2); x=Math.min(mx,Math.max(-mx,x)); y=Math.min(my,Math.max(-my,y)); };
+  const close = () => d.remove(); d.querySelector('.zx').onclick = close;
+  st.addEventListener('pointerdown', e => { st.setPointerCapture(e.pointerId); pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); moved=false;
+    if(pts.size===2){ const [a,b]=[...pts.values()]; start={dist:Math.hypot(a.x-b.x,a.y-b.y), sc, x, y, cx:(a.x+b.x)/2, cy:(a.y+b.y)/2}; } else start={px:e.clientX, py:e.clientY, x, y}; });
+  st.addEventListener('pointermove', e => { if(!pts.has(e.pointerId)) return; pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size===2 && start && start.dist){ const [a,b]=[...pts.values()]; sc=Math.min(5,Math.max(1,start.sc*Math.hypot(a.x-b.x,a.y-b.y)/start.dist)); const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2; x=start.x+(cx-start.cx); y=start.y+(cy-start.cy); moved=true; apply(); }
+    else if(pts.size===1 && start && start.px!==undefined){ const dx=e.clientX-start.px, dy=e.clientY-start.py; if(Math.abs(dx)+Math.abs(dy)>6) moved=true; if(sc>1){ x=start.x+dx; y=start.y+dy; apply(); } else { img.style.transition='none'; img.style.transform=`translateY(${Math.max(0,dy)}px)`; d.style.background=`rgba(0,0,0,${Math.max(.4,.94-dy/500)})`; } } });
+  const up = e => { const was = pts.size; pts.delete(e.pointerId);
+    if(was===1 && sc<=1 && start && start.py!==undefined && e.clientY-start.py>120){ return close(); }
+    if(was===1 && !moved){ const now=Date.now(); if(now-lastTap<300){ if(sc>1){ sc=1; x=0; y=0; } else { const r=st.getBoundingClientRect(); sc=2.5; x=(r.width/2-(e.clientX-r.left))*1.5; y=(r.height/2-(e.clientY-r.top))*1.5; } clampP(); apply(true); lastTap=0; return; } lastTap=now; }
+    if(pts.size===1){ const [a]=[...pts.values()]; start={px:a.x, py:a.y, x, y}; } else start=null;
+    d.style.background=''; clampP(); apply(true); };
+  st.addEventListener('pointerup', up); st.addEventListener('pointercancel', up);
+  st.addEventListener('wheel', e => { e.preventDefault(); sc=Math.min(5,Math.max(1,sc*(e.deltaY<0?1.15:0.87))); clampP(); apply(); }, {passive:false});
+};
+
 // ---------- ⓘ sheet ----------
 const ib = it => it && it.info ? `<button class="ib" onclick="event.stopPropagation();LTFinfo('${it.id}')" aria-label="info">${ic('info',20)}</button>` : '';
 window.LTFinfo = id => { const it = items.find(i=>i.id===id); if(!it||!it.info) return;
   const ph = photoOf(it), mine = !!PH[it.ikey];
-  const html = `${it.ikey&&ph?`<div class="hphoto"><img src="${ph}" alt=""><span class="ptag">${mine?T('Votre photo','Your photo'):T('Photo d\'illustration','Sample photo')}</span><button class="pclose" onclick="LTFcloseSheet()">${ic('x',18)}</button></div>`:`<button class="pclose solo" onclick="LTFcloseSheet()">${ic('x',18)}</button>`}
+  const html = `${it.ikey&&ph?`<div class="hphoto"><img src="${ph}" alt="" onclick="LTFzoom('${it.id}',event)"><span class="ptag">${mine?T('Votre photo','Your photo'):T('Photo d\'illustration','Sample photo')}</span><button class="pclose" onclick="LTFcloseSheet()">${ic('x',18)}</button></div>`:`<button class="pclose solo" onclick="LTFcloseSheet()">${ic('x',18)}</button>`}
    <div class="stitle tl2"><span>${it.front}</span>${sayBtn(it)}</div>${sayRow(it)}<div class="sdesc">${it.back}</div><div class="sinfo">${it.info}</div>`;
   const bar = it.ikey ? `${mine?`<button class="btn sec sq" id="phrst" aria-label="reset">${ic('reset',20)}</button>`:''}<label class="btn grow">${ic('cam',20)} ${mine?T('Changer la photo','Change photo'):T('Prendre ma photo','Take my photo')}<input type="file" accept="image/*" capture="environment" id="phin" hidden></label>` : '';
   const d = sheet(html, {bar});
@@ -504,7 +527,7 @@ function carte(){ const cats = [['all',T('Tout','All')]].concat(CH.filter(c=>c.i
   <div class="chips scroll">${cats.map(([v,l])=>`<button class="chip ${carteCat===v?'on':''}" onclick="LTFcat('${v}')">${l}</button>`).join('')}</div></div><div class="pad" id="list"></div>`;
   const render = () => { const f = norm($('#srch').value);
     const blocks = CH.filter(c=>c.id!=='plan' && (carteCat==='all'||carteCat===c.id)).map(c=>{ const its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+strip(i.back)+' '+strip(i.info)).includes(f)); if(!its.length) return '';
-      return `<div class="sh">${c.name}</div>`+its.map(i=>{ const ph=photoOf(i); return `<div class="li menu" ${i.info?`onclick="LTFinfo('${i.id}')"`:''}>${ph?`<img class="thumb" src="${ph}" loading="lazy" alt="">`:`<div class="av">${ic(CHIC[c.id]||'star',20)}</div>`}<div class="tx"><div class="n">${i.front}</div><div class="muted sm clamp">${esc(strip(i.back))}</div></div>${sayBtn(i)}${i.info?`<span class="rt">${ic('chev',18)}</span>`:''}</div>`; }).join(''); }).join('');
+      return `<div class="sh">${c.name}</div>`+its.map(i=>{ const ph=photoOf(i); return `<div class="li menu" ${i.info?`onclick="LTFinfo('${i.id}')"`:''}>${ph?`<img class="thumb zoomable" src="${ph}" loading="lazy" alt="" onclick="LTFzoom('${i.id}',event)">`:`<div class="av">${ic(CHIC[c.id]||'star',20)}</div>`}<div class="tx"><div class="n">${i.front}</div><div class="muted sm clamp">${esc(strip(i.back))}</div></div>${sayBtn(i)}${i.info?`<span class="rt">${ic('chev',18)}</span>`:''}</div>`; }).join(''); }).join('');
     const facts = (carteCat==='all'||carteCat==='facts') ? FACTS.filter(x=>norm(x).includes(f)) : [];
     $('#list').innerHTML = (blocks + (facts.length?`<div class="sh">${T('À retenir','Key facts')}</div><div class="card">`+facts.map(x=>`<p class="fact">${esc(x)}</p>`).join('')+'</div>':'')) || `<div class="empty muted">${T('Aucun résultat','No results')}</div>`; };
   $('#srch').oninput = render; render(); }
