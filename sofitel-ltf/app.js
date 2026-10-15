@@ -1,5 +1,5 @@
 (function(){
-const L = window.LTF, LE = window.LTF_EN || {words:{}}, LI = window.LTF_INFO || {};
+const L = window.LTF, LE = window.LTF_EN || {words:{}};
 const $ = s => document.querySelector(s);
 const app = $('#app');
 const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
@@ -17,6 +17,7 @@ function save(){ mem = S; try{ localStorage.setItem('ltf_v1', JSON.stringify(S))
 
 // ---------- language ----------
 const EN = S.lang==='en';
+const LI = (!EN && window.LTF_INFO_FR) ? window.LTF_INFO_FR : (window.LTF_INFO || {});
 const T = (fr,en) => EN ? en : fr;
 const W = s => (EN && LE.words && LE.words[s]) || s;
 const eur = p => (p===null||p===undefined) ? '—' : (String(p).replace('.', EN?'.':',')+' €');
@@ -56,7 +57,7 @@ function add(ch, front, back, gens, extra){ const it = Object.assign({id: ch+':'
 
 // ---------- ⓘ info builders ----------
 const sec = (ic, title, txt) => txt ? `<div class="isec"><div class="ih">${ic} ${title}</div><div>${txt}</div></div>` : '';
-const SAY = '💬', ttlSay = T('À dire au client (EN)','What to tell the guest');
+const SAY = '💬', ttlSay = T('À dire au client','What to tell the guest');
 function infoDish(d){ const n = (LI.dish||{})[d.n] || {}; const en = d.en || (LE.dishes||{})[d.n] || '';
   return sec('🇬🇧', T('En anglais','In English'), esc(en)) + sec(SAY, ttlSay, esc(n.say||'')) + sec('📖', T('Mots à connaître','Words to know'), esc(n.words||'')) + `<p class="warn">⚠ ${ALLERGY}</p>`; }
 const RICHW = /Meursault|Condrieu|Châteauneuf|Bandol|Beaune|Saint-Joseph|Pibarnon|Cardillone|Leoube|Minuty, Blanc/;
@@ -65,7 +66,7 @@ function infoWine(w){ const app = (LI.wineApp||{})[w.a] || '';
   const prodKey = Object.keys(LI.wineProd||{}).find(k=>w.w.indexOf(k)===0 || w.w.indexOf(k)>=0);
   const prod = prodKey ? LI.wineProd[prodKey] : '';
   const colour = {Blanc:'white',Rosé:'rosé',Rouge:'red'}[w.c];
-  const say = `A ${colour} ${w.a} from ${W(w.r)==='Provence'?'Provence':W(w.r)}, ${w.v}, by ${w.w}.`;
+  const say = EN ? `A ${colour} ${w.a} from ${W(w.r)}, ${w.v}, by ${w.w}.` : `Un ${w.c==='Blanc'?'blanc':w.c==='Rosé'?'rosé':'rouge'} ${w.a} (${w.r}), millésime ${w.v}, de ${w.w}.`;
   const pk = w.c==='Blanc' ? (RICHW.test(w.a+' '+w.w)?'BlancRich':'Blanc') : w.c==='Rosé' ? 'Rosé' : (BIGR.test(w.a)?'RougeBig':'Rouge');
   return sec(SAY, ttlSay, esc(say)) + sec('🍇', T('L\'appellation','The appellation'), esc(app)) + sec('🏡', T('Le domaine','The producer'), esc(prod)) + sec('🍽', T('Accord suggéré','Pairing idea'), esc((LI.pairWith||{})[pk]||'')); }
 function infoChamp(c){ const hk = Object.keys(LI.champagne||{}).find(k=>c.n.indexOf(k)>=0); const terms = Object.keys(LI.champagneTerms||{}).filter(k=>(c.n+' '+c.t).indexOf(k)>=0).map(k=>LI.champagneTerms[k]);
@@ -73,9 +74,9 @@ function infoChamp(c){ const hk = Object.keys(LI.champagne||{}).find(k=>c.n.inde
 function infoCock(c){ const e=(LE.cocktails||{})[c.n]||{}; return sec('🇬🇧', T('En anglais','In English'), esc(e.desc||'')) + sec(SAY, ttlSay, esc((LI.cocktail||{})[c.n]||'')) + (c.note?`<p class="warn">⚠ ${esc(EN&&e.note?e.note:c.note)}</p>`:''); }
 function infoSoft(s){ return sec('🇬🇧', T('En anglais','In English'), esc((LE.softs||{})[s.n]||'')) + sec(SAY, ttlSay, esc((LI.soft||{})[s.n]||(LI.cocktail||{})[s.n]||'')); }
 function infoTea(t){ const e=(LE.teas||{})[t.n]||[]; return sec('🇬🇧', T('En anglais','In English'), esc(e.length?e[0]+' — '+e[1]:'')) + sec(SAY, ttlSay, esc((LI.tea||{})[t.n]||'')); }
-function infoCoffee(c){ return sec('🇬🇧', T('En anglais','In English'), esc((LE.coffee||{})[c.n]||c.n)) + sec(SAY, ttlSay, esc(c.n==='Thé / infusion'?'Teas and herbal teas from Maison Père Blaize, Marseille\'s historic herbalist (founded 1815). Eight choices — see the tea list.':(LI.coffee||''))); }
+function infoCoffee(c){ return sec('🇬🇧', T('En anglais','In English'), esc((LE.coffee||{})[c.n]||c.n)) + sec(SAY, ttlSay, esc(c.n==='Thé / infusion'?(!EN&&LI.teaCoffee?LI.teaCoffee:'Teas and herbal teas from Maison Père Blaize, Marseille\'s historic herbalist (founded 1815). Eight choices — see the tea list.'):(LI.coffee||''))); }
 function infoDig(d){ return sec('🇬🇧', T('En anglais','In English'), esc((LE.digestifs||{})[d.n]||'')) + sec(SAY, ttlSay, esc((LI.digestif||{})[d.n]||'')); }
-function infoPair(w){ const e=(LE.pairing||{})[w.n]||{}; return sec(SAY, ttlSay, esc(`The ${({'Entrée':'starter','Plat poisson':'fish course','Plat viande':'meat course','Dessert':'dessert'})[w.course]} pairing of the Tasting Menu (+55 € per person). ${e.t||''}.`)) + sec('🍇', T('Cépages','Grapes'), esc(e.g||w.g)); }
+function infoPair(w){ const e=(LE.pairing||{})[w.n]||{}; const say = EN ? `The ${({'Entrée':'starter','Plat poisson':'fish course','Plat viande':'meat course','Dessert':'dessert'})[w.course]} pairing of the Tasting Menu (+55 € per person). ${e.t||''}.` : `L'accord ${({'Entrée':'de l\'entrée','Plat poisson':'du plat poisson','Plat viande':'du plat viande','Dessert':'du dessert'})[w.course]} du Menu Dégustation (+55 € par personne). ${w.t}.`; return sec(SAY, ttlSay, esc(say)) + sec('🍇', T('Cépages','Grapes'), esc(EN?(e.g||w.g):w.g)); }
 
 // ---------- build: dishes ----------
 const dishes = L.dishes;
@@ -341,7 +342,7 @@ function carte(){ app.innerHTML = header(T('La Carte','The Menu')) + `<input id=
   const render = () => { const f = norm($('#srch').value); $('#list').innerHTML = CH.map(c=>{ const its = items.filter(i=>i.ch===c.id && !i.fact && norm(i.front+' '+i.back.replace(/<[^>]+>/g,' ')+' '+(i.info||'').replace(/<[^>]+>/g,' ')).includes(f)); if(!its.length) return ''; return `<h3>${c.icon} ${c.name}</h3>`+its.map(i=>`<div class="li"><div class="lirow"><b>${i.front}</b>${ib(i)}</div><div>${i.back}</div></div>`).join(''); }).join('') + `<h3>📌 ${T('À retenir','Key facts')}</h3>`+FACTS.map(x=>`<div class="li">${esc(x)}</div>`).join(''); };
   $('#srch').oninput = render; render(); }
 
-function settings(){ app.innerHTML = header(T('Réglages','Settings')) + `<div class="card"><div class="sw">🌐 ${T('Langue','Language')} : <button class="chip ${EN?'':'on'}" onclick="LTFlang('fr')">Français</button><button class="chip ${EN?'on':''}" onclick="LTFlang('en')">English</button></div></div><div class="card"><label class="sw"><input type="checkbox" id="snd" ${S.sound?'checked':''}> ${T('Effets sonores','Sound effects')}</label></div><div class="card"><p>${T('Contenu transcrit des cartes réelles du restaurant (octobre 2026). La formule de la semaine change chaque semaine.','Content transcribed from the restaurant\'s real menus (October 2026). The weekly formula changes every week.')}</p><p>${T('Les fiches ⓘ donnent un texte court à dire au client, en anglais.','The ⓘ notes give a short English line to tell the guest.')}</p><p class="warn">${ALLERGY}</p></div><button class="big bad" id="rst">${T('Réinitialiser la progression','Reset progress')}</button>`;
+function settings(){ app.innerHTML = header(T('Réglages','Settings')) + `<div class="card"><div class="sw">🌐 ${T('Langue','Language')} : <button class="chip ${EN?'':'on'}" onclick="LTFlang('fr')">Français</button><button class="chip ${EN?'on':''}" onclick="LTFlang('en')">English</button></div></div><div class="card"><label class="sw"><input type="checkbox" id="snd" ${S.sound?'checked':''}> ${T('Effets sonores','Sound effects')}</label></div><div class="card"><p>${T('Contenu transcrit des cartes réelles du restaurant (octobre 2026). La formule de la semaine change chaque semaine.','Content transcribed from the restaurant\'s real menus (October 2026). The weekly formula changes every week.')}</p><p>${T('Les fiches ⓘ donnent un texte court à dire au client (en français ; passez en English pour la version anglaise).','The ⓘ notes give a short line to tell the guest (switch to Français for the French version).')}</p><p class="warn">${ALLERGY}</p></div><button class="big bad" id="rst">${T('Réinitialiser la progression','Reset progress')}</button>`;
   $('#snd').onchange=e=>{S.sound=e.target.checked;save();}; $('#rst').onclick=()=>{ if(confirm(T('Effacer toute la progression ?','Erase all progress?'))){ S={xp:0,m:{},best:{},review:[],streak:1,last:S.last,sound:S.sound,exam:null,lang:S.lang}; save(); go('hub'); } }; }
 
 // FX
