@@ -183,7 +183,7 @@ body.notabs .toast{bottom:calc(110px + env(safe-area-inset-bottom))}
 .ctab{flex:none;padding:10px 12px 11px;font-size:14px;font-weight:600;color:var(--mu);border-bottom:3px solid transparent;--c:var(--gold)}
 .ctab.on{color:var(--c);border-bottom-color:var(--c)}.ctab.q{color:var(--mu);padding:10px 8px}
 </style></head><body><div id="app"></div>
-<script src="hero.js"></script><script src="data.js"></script><script src="i18n.js"></script><script src="i18n_fr.js"></script><script src="images.js"></script><script src="app.js"></script>
+<script src="ltf.js"></script><script>wasm_bindgen({module_or_path:'ltf_bg.wasm'});</script>
 <button id="inst" style="display:none;position:fixed;right:14px;bottom:14px;z-index:40;background:#c9a24b;color:#0f1d33;border:0;border-radius:24px;padding:12px 18px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.4)">Installer l'app</button>
 <script>let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;const b=document.getElementById('inst');b.style.display='block';b.onclick=async()=>{b.style.display='none';dp.prompt();dp=null;};});</script>
 <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));}</script>
