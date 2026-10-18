@@ -185,9 +185,29 @@ body.notabs .toast{bottom:calc(110px + env(safe-area-inset-bottom))}
 .algs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.algs .chip{padding:6px 11px;font-size:12.5px}.algs .chip.q{background:transparent;border:1px dashed var(--tx2);opacity:.75}
 .card.row .rt{margin-left:auto}
 .gn{color:var(--gold,#c9a24a)}
+.tb.res{fill:#e8c873;stroke:#fff3c4;stroke-width:.5}.tl.rl{fill:#0d1a2e}.tb.sel{stroke:#fff;stroke-width:1.1;filter:drop-shadow(0 0 1.5px #e8c873)}
+.bplan{position:relative;padding:10px}.bplan .plan{max-height:none}.bpfs{position:absolute;top:8px;right:8px;font-size:12px}
+.bpleg{display:flex;align-items:center;gap:6px;margin:6px 4px 0}.bpdot{display:inline-block;width:12px;height:12px;border-radius:3px;background:#e8c873}
+.bpfull{position:fixed;inset:0;z-index:45;background:var(--bg);display:flex;flex-direction:column;animation:fade .18s}
+.bpfull .bph{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;padding-top:max(12px,env(safe-area-inset-top))}
+.bpfull .bpb{flex:1;display:flex;align-items:center;justify-content:center;padding:8px;overflow:auto}.bpfull .plan{max-height:none;width:100%;height:100%}
+.bpcard{background:var(--sf);border-radius:16px;padding:12px 14px;margin-top:8px}
 </style></head><body><div id="app"></div>
 <script src="ltf.js"></script><script>wasm_bindgen({module_or_path:'ltf_bg.wasm'});</script>
 <button id="inst" style="display:none;position:fixed;right:14px;bottom:14px;z-index:40;background:#c9a24b;color:#0f1d33;border:0;border-radius:24px;padding:12px 18px;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.4)">Installer l'app</button>
+<script>(function(){var TX={fr:['Plan des tables','Fermer','Table libre ce soir','Aucune réservation sur cette table.','Réservée'],en:['Table plan','Close','Free table tonight','No booking on this table.','Reserved']};
+function lang(){var b=document.getElementById('bplan');return TX[(b&&b.dataset.l)||'fr']||TX.fr;}
+function sel(id){document.querySelectorAll('.bplan .tb, .bpfull .tb').forEach(function(e){e.classList.toggle('sel',e.dataset.id===id);});}
+function info(id){var l=lang();sel(id);var c=document.querySelector('.pad .rescard[data-res="'+id+'"]');var o=document.getElementById('bpSheet');if(o)o.remove();var d=document.createElement('div');d.id='bpSheet';d.className='ov scrim';d.style.zIndex=60;
+d.innerHTML='<div class="sheet"><div class="grab"></div><div class="sbody"><div class="row"><h2 style="margin:0">'+id+'</h2><span class="chip'+(c?' gold':'')+' rt">'+(c?l[4]:l[2])+'</span></div><div class="bpcard">'+(c?c.innerHTML:'<div class="muted">'+l[3]+'</div>')+'</div></div><div class="abar"><button class="btn grow" id="bpX">'+l[1]+'</button></div></div>';
+d.onclick=function(e){if(e.target===d||e.target.id==='bpX'){d.remove();sel(null);}};document.body.appendChild(d);}
+function full(){var l=lang();var b=document.getElementById('bplan');if(!b)return;var svg=b.querySelector('svg');var d=document.createElement('div');d.className='ov bpfull';d.id='bpFS';
+d.innerHTML='<div class="bph"><b>'+l[0]+'</b><button class="btn txt" id="bpFX">✕ '+l[1]+'</button></div><div class="bpb">'+svg.outerHTML+'</div>';document.body.appendChild(d);
+try{if(d.requestFullscreen)d.requestFullscreen().catch(function(){});}catch(e){}}
+function closeFull(){var d=document.getElementById('bpFS');if(d)d.remove();try{if(document.fullscreenElement)document.exitFullscreen();}catch(e){}}
+document.addEventListener('click',function(e){var t=e.target;if(t.closest('#bpFull')){full();return;}if(t.closest('#bpFX')){closeFull();return;}var s=t.closest('.bplan [data-id], .bpfull [data-id]');if(s){info(s.dataset.id);}});
+document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement){var d=document.getElementById('bpFS');if(d&&d.dataset.fs)d.remove();}else{var d2=document.getElementById('bpFS');if(d2)d2.dataset.fs=1;}});
+addEventListener('hashchange',function(){closeFull();var o=document.getElementById('bpSheet');if(o)o.remove();});})();</script>
 <script src="names.js"></script><script>(function(){var N=null,K='ltf_code',L={fr:['Code équipe','Afficher les noms','Code incorrect','Noms des clients affichés','Masquer'],en:['Crew code','Show names','Wrong code','Guest names shown','Hide']};
 function b64(s){return Uint8Array.from(atob(s),function(c){return c.charCodeAt(0)});}
 async function dec(code){var E=window.LTF_NAMES;if(!E)throw 0;var k=await crypto.subtle.importKey('raw',new TextEncoder().encode(code),'PBKDF2',false,['deriveKey']);var key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(E.s),iterations:E.it,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['decrypt']);var p=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(E.iv)},key,b64(E.c));return JSON.parse(new TextDecoder().decode(p));}
