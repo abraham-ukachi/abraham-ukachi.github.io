@@ -257,6 +257,41 @@ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.c
 new MutationObserver(function(ms){var s=document.getElementById('sheet');if(s)enhance(s);else if(A){A.pause();A=null;}}).observe(document.body,{childList:true,subtree:true});
 setTimeout(function(){var seen={};Object.keys(G).forEach(function(k){var f=G[k][0];if(!seen[f]){seen[f]=1;fetch('say/'+f+'.mp3').catch(function(){});}});},8000);
 })();</script><script type="module" src="cloud.js"></script>
+<style>.chip .bi{display:inline-flex;align-items:center;gap:1px;margin-left:-4px}.chip .bi svg{width:22px;height:22px;flex:none}.chip .bie{font-size:18px;line-height:1}</style><script>(function(){
+var O='#9fb8d0';
+function sv(b){return '<svg viewBox="0 0 24 24" width="22" height="22" stroke-linejoin="round" stroke-linecap="round">'+b+'</svg>';}
+function stem(y1,y2){return '<path d="M12 '+y1+'V'+y2+'M8.5 '+y2+'h7" stroke="'+O+'" stroke-width="1.6" fill="none"/>';}
+var GL={
+flute:sv('<path d="M9.5 2h5l-.6 9.5a1.9 1.9 0 0 1-3.8 0z" fill="#f6e7b0" stroke="'+O+'" stroke-width="1.3"/><path d="M9.9 6h4.2l-.4 5.4a1.7 1.7 0 0 1-3.4 0z" fill="#f2c94c"/><circle cx="11.6" cy="8.5" r=".5" fill="#fff"/><circle cx="12.6" cy="7" r=".4" fill="#fff"/>'+stem(13.5,21.5)),
+wine:sv('<path d="M6.5 2.5h11c.3 5.5-2 9-5.5 9s-5.8-3.5-5.5-9z" fill="#f4e9ec" stroke="'+O+'" stroke-width="1.3"/><path d="M7 6.5h10c-.4 3.2-2.2 4.8-5 4.8S7.4 9.7 7 6.5z" fill="#a8233f"/>'+stem(11.5,21.5)),
+ballon:sv('<path d="M5 3h14c.6 7-2.6 10-7 10S4.4 10 5 3z" fill="#e3f3fa" stroke="'+O+'" stroke-width="1.3"/><path d="M5.6 7h12.8c-.4 3.6-2.9 5.3-6.4 5.3S6 10.6 5.6 7z" fill="#bfe6f5"/><circle cx="14.5" cy="8.6" r="2" fill="#8bc34a" stroke="#cfe8a0" stroke-width=".6"/><rect x="8" y="7.6" width="2.6" height="2.6" rx=".5" fill="#fff" opacity=".9"/>'+stem(13,21.5)),
+old:sv('<path d="M4.5 8h15l-1.2 12.5a1.6 1.6 0 0 1-1.6 1.5H7.3a1.6 1.6 0 0 1-1.6-1.5z" fill="#f3ebe0" stroke="'+O+'" stroke-width="1.3"/><path d="M5.2 13h13.6l-.7 7.4a1.2 1.2 0 0 1-1.2 1H7.1a1.2 1.2 0 0 1-1.2-1z" fill="#d9822b"/><rect x="8" y="11" width="4.2" height="4.2" rx=".8" fill="#fff" opacity=".85" transform="rotate(-10 10 13)"/>'),
+high:sv('<path d="M7 2h10l-.8 19a1.2 1.2 0 0 1-1.2 1H9a1.2 1.2 0 0 1-1.2-1z" fill="#eef6fb" stroke="'+O+'" stroke-width="1.3"/><path d="M7.3 8h9.4l-.55 12.9a1 1 0 0 1-1 .9H8.85a1 1 0 0 1-1-.9z" fill="#9fd3ec"/><circle cx="10.5" cy="12" r=".7" fill="#fff"/><circle cx="13" cy="15.5" r=".6" fill="#fff"/><circle cx="11.2" cy="18" r=".5" fill="#fff"/><path d="M14 0.8 11.5 10" stroke="#e53935" stroke-width="1.4"/>')
+};
+function bottle(c,cap,lab){return sv('<path d="M10 2h4v4.2l2 2.6V21a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8.8l2-2.6z" fill="'+c+'" stroke="rgba(0,0,0,.25)" stroke-width=".8"/><rect x="9.8" y="1.4" width="4.4" height="2" rx=".5" fill="'+(cap||'#c9a227')+'"/><rect x="8.9" y="12" width="6.2" height="5" rx=".8" fill="'+(lab||'#fff')+'" opacity=".9"/>');}
+function slice(rim,flesh){return sv('<circle cx="12" cy="12" r="9.5" fill="'+rim+'"/><circle cx="12" cy="12" r="7.8" fill="#fffbe6"/><circle cx="12" cy="12" r="7" fill="'+flesh+'"/><path d="M12 5v14M5 12h14M7 7l10 10M17 7 7 17" stroke="#fffbe6" stroke-width="1"/><circle cx="12" cy="12" r="1.2" fill="#fffbe6"/>');}
+function juice(c){return sv('<path d="M6 5h12l-1.4 15.5a1.6 1.6 0 0 1-1.6 1.5H9a1.6 1.6 0 0 1-1.6-1.5z" fill="#f3f6f8" stroke="'+O+'" stroke-width="1.3"/><path d="M6.6 9.5h10.8l-1.1 11a1.2 1.2 0 0 1-1.2 1.1H8.9a1.2 1.2 0 0 1-1.2-1.1z" fill="'+c+'"/><path d="M15 2 13 12" stroke="#43a047" stroke-width="1.4"/>');}
+function emo(e){return '<span class="bie">'+e+'</span>';}
+var STRAW=sv('<path d="M15.5 1.5 9 22.5" stroke="#e53935" stroke-width="3.2"/><path d="M15.5 1.5 9 22.5" stroke="#fff" stroke-width="3.2" stroke-dasharray="2 2.6"/>'),
+NONE=sv('<circle cx="12" cy="12" r="8.5" fill="none" stroke="#8a97a8" stroke-width="2"/><path d="M6 18 18 6" stroke="#8a97a8" stroke-width="2"/>'),
+CRAN=sv('<circle cx="9" cy="14" r="5" fill="#c62828"/><circle cx="15.5" cy="10" r="4.5" fill="#e53935"/><circle cx="14.5" cy="17" r="3.8" fill="#b71c1c"/><circle cx="7.5" cy="12.5" r="1" fill="#fff" opacity=".6"/><circle cx="14.2" cy="8.8" r=".9" fill="#fff" opacity=".6"/>'),
+LEMON=slice('#f5c518','#ffe45c'),LIME=slice('#5a9e2f','#a5d65a'),ORANGE=slice('#f08a1c','#ffb547');
+var R=[
+[/fl[uû]te/,GL.flute],[/ballon|balloon/,GL.ballon],[/vin|wine/,GL.wine],[/old fashioned/,GL.old],[/highball/,GL.high],
+[/jus d.orange|orange juice/,juice('#ffa726')],[/cranberry juice|jus de cranberry/,juice('#c2185b')],[/ananas|pineapple/,emo('🍍')],
+[/fleur d.oranger|orange blossom/,emo('🌼')],[/citron vert|lime/,LIME],[/citron|lemon/,LEMON],[/orange/,ORANGE],[/cranberry/,CRAN],[/paille|straw/,STRAW],
+[/p[eê]che|peach/,emo('🍑')],[/lavande|lavender/,bottle('#9575cd','#5e35b1')],[/champagne/,bottle('#1b5e20','#f2c94c','#f6e7b0')],[/prosecco/,bottle('#7cb342','#e0c068')],
+[/bitter/,bottle('#d84315','#212121')],[/perrier/,bottle('#2e7d32','#e0e0e0','#f9e04b')],[/gin/,bottle('#b3e5fc','#1565c0')],[/thym|thyme/,bottle('#558b2f','#33691e')],
+[/tonic/,bottle('#fff59d','#9e9e9e')],[/rhum|rum/,bottle('#a0522d','#3e2723')],[/framboise|raspberry/,bottle('#ad1457','#880e4f')],[/angostura/,bottle('#5d4037','#f9a825','#fff8e1')],
+[/sirop|syrup/,bottle('#fff3e0','#8d6e63')],[/notre-dame|tea\b|th[ée] /,emo('🍵')],[/earl grey/,emo('🫖')],[/menthe|mint/,emo('🌿')],[/^eau$|^water$/,emo('💧')],[/^—$/,NONE]
+];
+function one(t){t=t.toLowerCase().trim();for(var i=0;i<R.length;i++)if(R[i][0].test(t))return R[i][1];return '';}
+function icons(v,multi){if(!multi)return one(v);var s=one(v);if(/[,+]/.test(v)){s='';v.split(/[,+]/).forEach(function(p){s+=one(p);});}return s;}
+var q=0;function run(){q=0;['sh','gl','ga'].forEach(function(id){var box=document.getElementById(id);if(!box)return;box.querySelectorAll('.chip[data-v]:not([data-bi])').forEach(function(c){c.setAttribute('data-bi','1');var h=icons(c.getAttribute('data-v'),id==='ga');if(h)c.insertAdjacentHTML('afterbegin','<span class="bi">'+h+'</span>');});});}
+new MutationObserver(function(){if(!q){q=1;requestAnimationFrame(run);}}).observe(document.body,{childList:true,subtree:true});run();
+window.__barIcons=icons;
+})();
+</script>
 <style>.li.menu{position:relative}.wb{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:11px;background:#2f80ed;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.3);pointer-events:none;z-index:1}.wb svg{width:13px;height:13px}.chip .wb{position:static;width:18px;height:18px;margin-left:2px;box-shadow:none}.chip .wb svg{width:11px;height:11px}[onclick*="'hiver'"] .av svg,[onclick*="'hiver'"] .av svg *{stroke:#2f80ed!important}</style><script>(function(){var W=new Set(["Poireau à la tapenade originelle", "Crabe bleu", "Huîtres de Camargue", "Rouget de roche", "Noix de Saint-Jacques marinées à cru", "Raviole au foie gras de canard et champignons", "Linguines aux palourdes", "Noix de Saint-Jacques aux agrumes", "Dos de loup au grill", "Retour de pêche suivant la criée", "Pieds paquets de calamar", "Pot-au-feu de poulette des Alpilles", "Faux-filet de bœuf maturé", "Champignons des bois", "Poire / marrons, comme un mont blanc", "Pommes façon tatin, infusion vanille-anis étoilé", "Chocolat / sésame noir", "Pignon de pin, romarin, citron"]),B='<span class="wb" aria-label="Carte d\'hiver"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4.5 7l15 10M19.5 7l-15 10M9 4l3 2 3-2M9 20l3-2 3 2"/></svg></span>',q=0;function run(){q=0;document.querySelectorAll(".li.menu:not([data-wb])").forEach(function(e){e.setAttribute("data-wb","1");var n=e.querySelector(".n");if(n&&W.has(n.textContent.trim()))e.insertAdjacentHTML("beforeend",B);});document.querySelectorAll(".chip[onclick*=\"LTFcat('hiver')\"]:not([data-wb])").forEach(function(c){c.setAttribute("data-wb","1");c.insertAdjacentHTML("beforeend",B);});}new MutationObserver(function(){if(!q){q=1;requestAnimationFrame(run);}}).observe(document.body,{childList:true,subtree:true});run();})();</script>
 
 <script>let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;const b=document.getElementById('inst');b.style.display='block';b.onclick=async()=>{b.style.display='none';dp.prompt();dp=null;};});</script>
