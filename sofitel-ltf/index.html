@@ -228,6 +228,21 @@ function fill(){document.querySelectorAll('.gn').forEach(function(e){var n=N&&N[
 function box(b){var l=L[b.dataset.l]||L.fr;b.dataset.init=1;if(N){b.innerHTML='<div class="row"><div class="tx">🔓 '+l[3]+'</div><button class="btn txt rt" id="gnLock">'+l[4]+'</button></div>';b.querySelector('#gnLock').onclick=function(){N=null;try{localStorage.removeItem(K)}catch(e){}fill();box(b);};}else{b.innerHTML='<div class="row" style="gap:8px"><div class="srch" style="margin:0;flex:1"><input id="gnCode" type="password" inputmode="numeric" placeholder="🔒 '+l[0]+'" autocomplete="off"></div><button class="btn" id="gnGo">'+l[1]+'</button></div><div class="muted sm" id="gnMsg"></div>';var go=async function(){var c=b.querySelector('#gnCode').value.trim();b.querySelector('#gnMsg').textContent='…';try{N=await dec(c);try{localStorage.setItem(K,c)}catch(e){}fill();box(b);}catch(e){b.querySelector('#gnMsg').textContent=l[2];}};b.querySelector('#gnGo').onclick=go;b.querySelector('#gnCode').onkeydown=function(e){if(e.key==='Enter')go();};}fill();}
 async function scan(){var b=document.getElementById('gnBox');if(!b||b.dataset.init)return;if(!N){var c=null;try{c=localStorage.getItem(K)}catch(e){}if(c){try{N=await dec(c)}catch(e){try{localStorage.removeItem(K)}catch(x){}}}}if(!b.dataset.init)box(b);}
 new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});})();</script>
+<style>html:has(.ov.scrim),body:has(.ov.scrim){overscroll-behavior-y:none}.ov.scrim{overscroll-behavior:contain;touch-action:pan-y}.sbody{overscroll-behavior-y:contain}.sheet .grab{width:48px;position:relative}.sheet .grab::before{content:'';position:absolute;left:-30px;right:-30px;top:-12px;bottom:-12px}.sheet.drag{transition:none!important;animation:none!important}</style>
+<script>(function(){var S=null;
+function sc(t,sh){for(var e=t;e&&e!==sh;e=e.parentElement){if(e.scrollHeight>e.clientHeight+2){var o=getComputedStyle(e).overflowY;if(o==='auto'||o==='scroll')return e;}}return null;}
+addEventListener('touchstart',function(ev){var t=ev.target,ov=t.closest&&t.closest('.ov.scrim');if(!ov||ev.touches.length>1){S=null;return;}var sh=ov.querySelector('.sheet');if(!sh){S=null;return;}
+ var inSh=sh.contains(t),box=inSh?sc(t,sh):null;S={ov:ov,sh:sh,y:ev.touches[0].clientY,x:ev.touches[0].clientX,t:Date.now(),box:box,top:box?box.scrollTop<=0:true,dy:0,on:false,dead:false};},{passive:true});
+addEventListener('touchmove',function(ev){if(!S)return;var dy=ev.touches[0].clientY-S.y,dx=ev.touches[0].clientX-S.x;
+ if(!S.on&&!S.dead){if(Math.abs(dy)<6&&Math.abs(dx)<6){if(ev.cancelable&&dy>0&&S.top)ev.preventDefault();return;}
+  if(dy>0&&Math.abs(dy)>Math.abs(dx)&&S.top&&(!S.box||S.box.scrollTop<=0)){S.on=true;S.y0=ev.touches[0].clientY;S.sh.classList.add('drag');}else{S.dead=true;}}
+ if(S.on){if(ev.cancelable)ev.preventDefault();S.dy=Math.max(0,ev.touches[0].clientY-S.y0);S.sh.style.transform='translateY('+S.dy+'px)';S.ov.style.opacity=String(Math.max(.35,1-S.dy/(S.sh.offsetHeight*1.4)));}
+ else if(S.dead&&dy>0&&S.box&&S.box.scrollTop<=0&&ev.cancelable){ev.preventDefault();}},{passive:false});
+function end(){if(!S||!S.on){S=null;return;}var s=S;S=null;var v=s.dy/Math.max(1,Date.now()-s.t),h=s.sh.offsetHeight;
+ s.sh.style.transition='transform .2s ease-out';s.ov.style.transition='opacity .2s';
+ if(s.dy>Math.min(140,h*.3)||v>.6){s.sh.style.transform='translateY('+(h+40)+'px)';s.ov.style.opacity='0';setTimeout(function(){if(s.ov.id==='sheet'&&window.LTFcloseSheet){s.ov.classList.add('gone');}s.ov.remove();},200);}
+ else{s.sh.style.transform='';s.ov.style.opacity='';setTimeout(function(){s.sh.classList.remove('drag');s.sh.style.transition='';s.ov.style.transition='';},220);}}
+addEventListener('touchend',end,{passive:true});addEventListener('touchcancel',end,{passive:true});})();</script>
 <script type="module" src="cloud.js"></script>
 <script>let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;const b=document.getElementById('inst');b.style.display='block';b.onclick=async()=>{b.style.display='none';dp.prompt();dp=null;};});</script>
 <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));}</script>
