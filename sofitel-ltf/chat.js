@@ -109,7 +109,6 @@ function paint() {
   rp.style.display = rep || pend ? 'flex' : 'none';
   rp.innerHTML = (pend ? '<img src="' + pend + '" alt="">' : '') + '<div class="grow crq" style="min-width:0' + (rep ? ';border-color:' + col(rep.uid)[1] : '') + '">' + (rep ? '<b style="color:' + col(rep.uid)[1] + '">↩︎ ' + esc(rep.name) + '</b><div class="crt">' + esc(rep.text || '📷') + '</div>' : '<span class="muted">' + T('Photo prête à envoyer', 'Photo ready to send') + '</span>') + '</div><button aria-label="x">✕</button>';
   rp.querySelector('button').onclick = () => { rep = null; pend = null; paint(); };
-  ov.querySelector('.csend').disabled = false;
 }
 async function send() {
   const ta = ov.querySelector('textarea'), text = ta.value.trim().slice(0, 1000);
@@ -129,14 +128,18 @@ function open() {
   if (ov) return;
   ov = document.createElement('div'); ov.className = 'chatov';
   ov.innerHTML = '<div class="sch"><button class="cx" aria-label="close">←</button><div class="grow"><div style="font-weight:700">' + T('Chat de l\'équipe', 'Team chat') + '</div><div class="muted sm">Les Trois Forts</div></div></div>' +
-    '<div class="cbody"></div><div class="cfoot"><div class="crep"></div><div class="crow"><label class="cph" aria-label="photo">📷<input type="file" accept="image/*" hidden></label><textarea rows="1" maxlength="1000" placeholder="' + T('Message…', 'Message…') + '"></textarea><button class="csend" aria-label="send">➤</button></div></div>';
+    '<div class="cbody"></div><div class="cfoot"><div class="crep"></div><div class="cmenu" hidden><label><input type="file" accept="image/*" capture="environment" hidden>📷 ' + T('Appareil photo', 'Camera') + '</label><label><input type="file" accept="image/*" hidden>🖼️ ' + T('Photos', 'Photos') + '</label></div><div class="cpill"><textarea rows="1" maxlength="1000" enterkeyhint="send" placeholder="' + T('Message…', 'Message…') + '"></textarea><button class="cplus" aria-label="photo">+</button></div></div>';
   document.body.appendChild(ov);
   history.pushState({ chat: 1 }, '');
   ov.querySelector('.cx').onclick = () => history.back();
   const ta = ov.querySelector('textarea');
   ta.addEventListener('input', () => { ta.style.height = ''; ta.style.height = Math.min(120, ta.scrollHeight) + 'px'; });
-  ov.querySelector('.csend').onclick = send;
-  ov.querySelector('input[type=file]').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f || !/^image\//.test(f.type)) return; try { pend = await shrink(f); paint(); } catch (x) { err = T('Photo illisible', 'Could not read photo'); paint(); } };
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } });
+  ta.addEventListener('beforeinput', e => { if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') { e.preventDefault(); send(); } });
+  const menu = ov.querySelector('.cmenu');
+  ov.querySelector('.cplus').onclick = e => { e.stopPropagation(); menu.hidden = !menu.hidden; };
+  ov.addEventListener('click', e => { if (!menu.hidden && !e.target.closest('.cmenu')) menu.hidden = true; });
+  ov.querySelectorAll('.cmenu input[type=file]').forEach(inp => inp.onchange = async e => { menu.hidden = true; const f = e.target.files[0]; e.target.value = ''; if (!f || !/^image\//.test(f.type)) return; try { pend = await shrink(f); paint(); ta.focus(); } catch (x) { err = T('Photo illisible', 'Could not read photo'); paint(); } });
   ov.querySelector('.cbody').addEventListener('click', e => {
     const t = e.target; if (ov.querySelector('.cbody').dataset.sw) return;
     if (t.closest('[data-re]')) { const b = t.closest('[data-re]'); sel = null; react(b.dataset.re, b.dataset.e); paint(); return; }
