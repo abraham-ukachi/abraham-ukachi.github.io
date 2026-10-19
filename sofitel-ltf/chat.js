@@ -70,15 +70,18 @@ function view(src) {
 }
 
 // ---------- UI ----------
+const PAL = [['#1f3d6e', '#8fb4f0'], ['#6a3a1c', '#f0b27a'], ['#1d5238', '#83d1a6'], ['#4a2a66', '#c7a2ec'], ['#14545a', '#7fd3d9'], ['#6b2433', '#ef9aa9'], ['#4d4a1a', '#d8d27a'], ['#3b4256', '#aab4cc']];
+const col = uid => { let h = 0; for (const c of String(uid || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return PAL[h % PAL.length]; };
 function bubble(m) {
-  const me = user && m.uid === user.uid;
+  const me = user && m.uid === user.uid, [bg, ac] = col(m.uid);
   const r = m.r || {}, cnt = {};
   Object.values(r).forEach(e => cnt[e] = (cnt[e] || 0) + 1);
   const chips = Object.keys(cnt).map(e => '<button class="cr' + (user && r[user.uid] === e ? ' on' : '') + '" data-re="' + m.id + '" data-e="' + e + '">' + e + (cnt[e] > 1 ? ' ' + cnt[e] : '') + '</button>').join('');
-  const av = m.pic ? '<img class="cav" src="' + esc(m.pic) + '" referrerpolicy="no-referrer" alt="">' : '<div class="cav">' + esc((m.name || '?')[0]) + '</div>';
-  return '<div class="cm' + (me ? ' me' : '') + '" data-id="' + m.id + '">' + (me ? '' : av) + '<div class="cbw">' +
-    '<div class="cb">' + (me ? '' : '<div class="cn">' + esc(m.name) + '</div>') +
-    (m.rep ? '<div class="cq"><b>' + esc(m.rep.name) + '</b> ' + esc(m.rep.text || '📷') + '</div>' : '') +
+  const av = m.pic ? '<img class="cav" src="' + esc(m.pic) + '" referrerpolicy="no-referrer" alt="">' : '<span class="cav" style="background:' + bg + '">' + esc((m.name || '?')[0]) + '</span>';
+  return '<div class="cm' + (me ? ' me' : '') + '" data-id="' + m.id + '"><span class="cswi">↩︎</span><div class="cbw">' +
+    '<div class="ccap" style="color:' + ac + '">' + av + '<span>' + esc(m.name || 'Staff') + '</span></div>' +
+    '<div class="cb" style="background:' + bg + '">' +
+    (m.rep ? '<div class="cq" style="border-color:' + col(m.rep.uid)[1] + '"><b>' + esc(m.rep.name) + '</b> ' + esc(m.rep.text || '📷') + '</div>' : '') +
     (m.img ? '<img class="ci" src="' + m.img + '" alt="">' : '') +
     (m.text ? '<div class="ct">' + esc(m.text).replace(/\n/g, '<br>') + '</div>' : '') +
     '<div class="ctm">' + hhmm(ms(m)) + '</div></div>' +
@@ -87,6 +90,7 @@ function bubble(m) {
       '<button class="crp" data-rp="' + m.id + '">↩︎ ' + T('Répondre', 'Reply') + '</button>' + (me ? '<button class="crp" data-del="' + m.id + '">🗑</button>' : '') + '</div>' : '') +
     '</div></div>';
 }
+function setRep(id) { const m = msgs.find(x => x.id === id); if (!m) return; rep = { id: m.id, uid: m.uid || '', name: m.name || '', text: (m.text || (m.img ? '📷 Photo' : '')).slice(0, 120) }; sel = null; paint(); const ta = ov && ov.querySelector('textarea'); if (ta) ta.focus(); }
 function paint() {
   if (!ov) return;
   const body = ov.querySelector('.cbody'), foot = ov.querySelector('.cfoot');
@@ -103,7 +107,7 @@ function paint() {
   if (atBottom || !paint.done) { body.scrollTop = body.scrollHeight; paint.done = true; }
   const rp = ov.querySelector('.crep');
   rp.style.display = rep || pend ? 'flex' : 'none';
-  rp.innerHTML = (pend ? '<img src="' + pend + '" alt="">' : '') + '<div class="grow" style="min-width:0">' + (rep ? '<b>↩︎ ' + esc(rep.name) + '</b> <span class="muted">' + esc(rep.text || '📷') + '</span>' : '<span class="muted">' + T('Photo prête à envoyer', 'Photo ready to send') + '</span>') + '</div><button aria-label="x">✕</button>';
+  rp.innerHTML = (pend ? '<img src="' + pend + '" alt="">' : '') + '<div class="grow crq" style="min-width:0' + (rep ? ';border-color:' + col(rep.uid)[1] : '') + '">' + (rep ? '<b style="color:' + col(rep.uid)[1] + '">↩︎ ' + esc(rep.name) + '</b><div class="crt">' + esc(rep.text || '📷') + '</div>' : '<span class="muted">' + T('Photo prête à envoyer', 'Photo ready to send') + '</span>') + '</div><button aria-label="x">✕</button>';
   rp.querySelector('button').onclick = () => { rep = null; pend = null; paint(); };
   ov.querySelector('.csend').disabled = false;
 }
@@ -134,14 +138,23 @@ function open() {
   ov.querySelector('.csend').onclick = send;
   ov.querySelector('input[type=file]').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f || !/^image\//.test(f.type)) return; try { pend = await shrink(f); paint(); } catch (x) { err = T('Photo illisible', 'Could not read photo'); paint(); } };
   ov.querySelector('.cbody').addEventListener('click', e => {
-    const t = e.target;
+    const t = e.target; if (ov.querySelector('.cbody').dataset.sw) return;
     if (t.closest('[data-re]')) { const b = t.closest('[data-re]'); sel = null; react(b.dataset.re, b.dataset.e); paint(); return; }
-    if (t.closest('[data-rp]')) { const m = msgs.find(x => x.id === t.closest('[data-rp]').dataset.rp); if (m) rep = { id: m.id, name: m.name || '', text: (m.text || '').slice(0, 120) }; sel = null; paint(); ta.focus(); return; }
+    if (t.closest('[data-rp]')) { setRep(t.closest('[data-rp]').dataset.rp); return; }
     if (t.closest('[data-del]')) { const id = t.closest('[data-del]').dataset.del; sel = null; if (confirm(T('Supprimer ce message ?', 'Delete this message?'))) deleteDoc(doc(db, 'chat', id)).catch(() => { }); paint(); return; }
     if (t.classList.contains('ci')) { view(t.src); return; }
     const b = t.closest('.cb'); const cm = t.closest('.cm');
     sel = b && cm && sel !== cm.dataset.id ? cm.dataset.id : null; paint();
   });
+  const body = ov.querySelector('.cbody'); let sw = null;
+  body.addEventListener('pointerdown', e => { const cm = e.target.closest('.cm'); if (!cm || e.target.closest('button')) return; sw = { cm, x: e.clientX, y: e.clientY, on: false }; });
+  body.addEventListener('pointermove', e => { if (!sw) return; const dx = e.clientX - sw.x, dy = e.clientY - sw.y;
+    if (!sw.on) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; } if (dx > 10 && dx > Math.abs(dy)) { sw.on = true; try { body.setPointerCapture(e.pointerId); } catch (x) { } } else return; }
+    const v = Math.max(0, Math.min(90, dx)); sw.cm.style.transition = 'none'; sw.cm.style.transform = 'translateX(' + v + 'px)'; sw.cm.classList.toggle('arm', v > 60); });
+  const end = () => { if (!sw) return; const cm = sw.cm, on = sw.on, arm = cm.classList.contains('arm'); sw = null; if (!on) return;
+    cm.style.transition = 'transform .2s'; cm.style.transform = ''; cm.classList.remove('arm'); body.dataset.sw = '1'; setTimeout(() => delete body.dataset.sw, 50);
+    if (arm) { if (navigator.vibrate) navigator.vibrate(10); setRep(cm.dataset.id); } };
+  body.addEventListener('pointerup', end); body.addEventListener('pointercancel', end);
   markSeen(); paint.done = false; paint(); fab();
 }
 function close() { if (!ov) return; ov.remove(); ov = null; sel = null; markSeen(); fab(); }
